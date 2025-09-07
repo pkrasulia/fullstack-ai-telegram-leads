@@ -1,0 +1,313 @@
+{
+  "NotFoundPage": {
+    "title": "Not found",
+    "description": "page not found"
+  },
+
+  "navbar": {
+    "logo": "GPT/HELP",
+    "routes": {
+      "about": "About",
+      "testimonials": "Testimonials",
+      "pricing": "Pricing",
+      "faq": "FAQ"
+    },
+    "buttons": {
+      "signIn": "Sign In",
+      "signUp": "Sign Up"
+    },
+    "theme": {
+      "dark": "Dark",
+      "light": "Light",
+      "system": "System"
+    }
+  },
+
+  "home": {
+    "hero": {
+      "titlePrefix": "Advanced",
+      "titleSuffix": "AI assistant",
+      "for": "for",
+      "your": "your",
+      "bussines": "business",
+      "description": "Enhance your customer service with our innovative AI assistant on messaging platforms. Get 24/7 support, instant responses, and an outstanding user experience.",
+      "startFreeButton": "Start for free",
+      "cards": {
+        "testimonial": {
+          "name": "John Doe",
+          "position": "Marketing Director at 'ProfiTour'",
+          "text": "Thank you for the work, etc!"
+        },
+        "assistant": {
+          "name": "Mira",
+          "position": "Personal Assistant",
+          "description": "I'm your personal virtual assistant, always ready to help with any questions 24/7",
+          "send_message": "send message"
+        },
+        "pricing": {
+          "title": "PRO",
+          "badge": "Most Popular",
+          "price": "0",
+          "period": "month",
+          "priceDescription": "You only pay for the tokens used",
+          "ctaButton": "Start for free",
+          "benefits": {
+            "unlimited_requests": "Unlimited requests",
+            "unlimited_assistants": "Unlimited assistants",
+            "unlimited_domains": "Unlimited domains"
+          }
+        },
+        "service": {
+          "title": "What's new?",
+          "description": "Track user sentiment in the admin panel"
+        }
+      }
+    },
+    "about": {
+      "titleAccent": "Innovative",
+      "title": "Solutions for Digital Interaction",
+      "description": "We are a team of experts in artificial intelligence and cutting-edge technologies. Our mission is to provide innovative solutions that transform the ways of digital interaction and communication. Combining our knowledge in machine learning, natural language processing, and software development, we have created a unique AI assistant for messaging platforms. It will help your company stay at the forefront of digital communications and provide your customers with unparalleled service.",
+      "statistics": {
+        "items": [
+          {
+            "quantity": "98%",
+            "description": "Positive reviews"
+          },
+          {
+            "quantity": "2.5 M",
+            "description": "Dialogues per month"
+          },
+          {
+            "quantity": "100+ M",
+            "description": "Messages this year"
+          },
+          {
+            "quantity": "120+",
+            "description": "Supported languages"
+          }
+        ]
+      }
+    },
+    "howItWorks": {
+      "first": "Deploy",
+      "titleAccent": "AI Assistant",
+      "title": "in 4 Easy Steps",
+      "description": "Integrate our innovative AI assistant into your digital channels in just three easy steps. Get a powerful tool to enhance customer interactions.",
+      "features": [
+        {
+          "title": "Create Your Assistant",
+          "description": "Start by creating your own virtual assistant using our intuitive platform. Give it a name, personality, and other parameters."
+        },
+        {
+          "title": "Add Messaging Channels",
+          "description": "The second step is to integrate your assistant with popular messaging channels like Facebook Messenger, WhatsApp, Telegram, and others."
+        },
+        {
+          "title": "Train Your Assistant",
+          "description": "Our machine learning system will quickly 'teach' your assistant about your product line, industry terminology, and best customer service practices."
+        },
+        {
+          "title": "Optimize and Scale",
+          "description": "Continuous analysis of interactions and feedback allows you to constantly improve your assistant's performance. Easily scale as your business grows."
+        }
+      ]
+    },
+    "services": {
+      "titleAccent": "And That's",
+      "title": "Not All",
+      "description": "Our AI assistant provides a wide range of features and services designed to improve customer interaction efficiency, enhance analytics, and streamline communication management.",
+      "features": [
+        {
+          "title": "Customer Sentiment Analysis",
+          "description": "Track user sentiment and emotional tone during conversations with the assistant. Gain valuable data to improve service quality."
+        },
+        {
+          "title": "Unified Communication Platform",
+          "description": "Communicate with customers across all popular messaging channels and manage dialogues from a single, simple interface. No more scattered data."
+        },
+        {
+          "title": "Personalized Conversation Scenarios",
+          "description": "Create individual conversation scenarios for different situations - sales, support, marketing. The assistant will operate within the defined strategy."
+        }
+      ]
+    },
+    "cta": {
+      "titleStart": "Start",
+      "titleAccent": "Free",
+      "title": "Trial",
+      "description": "Experience the full benefits of our platform risk-free. Just sign up and explore the possibilities of managing communications from a single interface for 2 weeks.",
+      "startButton": "Get Started",
+      "questionButton": "Ask a Question"
+    },
+    "newsletter": {
+      "title": "Be the First to Know About the Latest AI Developments",
+      "description": "Subscribe to our newsletter and stay up-to-date with the latest advancements and trends",
+      "placeholder": "example@mail.com",
+      "submitButton": "Subscribe"
+    },
+
+    "testimonials": {
+      "titleSuffix": "Why",
+      "titleAccent": "Clients",
+      "title": "Choose Our Platform",
+      "description": "See what companies have to say about the benefits of unifying all customer communications in a single interface.",
+      "reviews": [
+        {
+          "name": "John Smith",
+          "position": "CEO at TechSolutions Inc.",
+          "comment": "GPT/HELP's AI assistant has been a game-changer for our customer support team. It handles a vast majority of routine inquiries, significantly reducing the workload on our agents while maintaining top-notch service quality."
+        },
+        {
+          "name": "Emily Johnson",
+          "position": "Marketing Director at BrandBoost LLC",
+          "comment": "The unified communication platform has streamlined our entire marketing workflow. We can now manage all client interactions from a single interface, ensuring a consistent and efficient experience."
+        },
+        {
+          "name": "Michael Brown",
+          "position": "Sales Manager at LeadGen Corp.",
+          "comment": "With GPT/HELP, we've been able to respond to leads and customer inquiries much faster. The ability to assign ownership and track conversation history has given us complete control over the sales process."
+        },
+        {
+          "name": "Sarah Wilson",
+          "position": "Customer Success Manager at SaaS Global",
+          "comment": "The AI assistant's sentiment analysis feature has provided invaluable insights into our customers' experiences. We can now identify pain points and make data-driven improvements to boost satisfaction."
+        },
+        {
+          "name": "David Thompson",
+          "position": "Project Lead at DigitalAgency",
+          "comment": "GPT/HELP's AI assistant perfectly complements our client communication efforts, providing 24/7 information support. This has freed up our team's time to focus on more strategic tasks."
+        }
+      ]
+    },
+    "faq": {
+      "title": "Answers to popular",
+      "titleAccent": "questions",
+      "still_questions": "Still have questions?",
+      "write_to_us": "Write to us",
+      "questions": [
+        {
+          "title": "How quickly can I deploy the assistant?",
+          "description": "You can connect within 10 minutes"
+        },
+        {
+          "title": "Do I need additional training for the assistant?",
+          "description": "You can connect within 10 minutes"
+        },
+        {
+          "title": "What channels does the assistant support?",
+          "description": "You can connect within 10 minutes"
+        },
+        {
+          "title": "How quickly can I deploy the assistant?",
+          "description": "You can connect within 10 minutes"
+        },
+        {
+          "title": "How quickly can I deploy the assistant?",
+          "description": "You can connect within 10 minutes"
+        }
+      ]
+    },
+    "footer": {
+      "policy": "All rights reserved ©",
+      "year": "2024"
+    }
+  },
+
+  "dashboard": {
+    "title": "dashboard"
+  },
+
+  "assistant": {
+    "title": "profile"
+  },
+
+  "integration": {
+    "title": "integration"
+  },
+
+  "profile": {
+    "title": "profile"
+  },
+
+  "instructions": {
+    "title": "instructions"
+  },
+
+  "faq": {
+    "title": "faq"
+  },
+
+  "chat": {
+    "title": "chat"
+  },
+
+  "sign-up": {
+    "title": "Sign Up",
+    "description": "Enter your information to create an account",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "email": "Email",
+    "password": "Password",
+    "createAccount": "Create an account",
+    "signUpWithGoogle": "Sign up with Google",
+    "alreadyHaveAccount": "Already have an account? Sign in"
+  },
+
+  "forgot-password": {
+    "title": "Forgot Password",
+    "actions": {
+      "submit": "Send reset link"
+    },
+    "inputs": {
+      "email": {
+        "label": "Email",
+        "validation": {
+          "required": "Email is required",
+          "invalid": "Email is invalid",
+          "server": {
+            "emailNotExists": "User with this email does not exist"
+          }
+        }
+      }
+    },
+    "alerts": {
+      "success": "Password reset link has been sent to your email"
+    }
+  },
+
+  "test-mode": {
+    "title": "Test mode"
+  },
+
+  "sign-in": {
+    "title": "Sign In",
+    "actions": {
+      "submit": "Sign In",
+      "createAccount": "Create an account",
+      "forgotPassword": "Forgot password?"
+    },
+    "inputs": {
+      "email": {
+        "label": "Email",
+        "validation": {
+          "required": "Email is required",
+          "invalid": "Email is invalid",
+          "server": {
+            "emailNotExists": "Email does not exist"
+          }
+        }
+      },
+      "password": {
+        "label": "Password",
+        "validation": {
+          "required": "Password is required",
+          "min": "Password must be at least 6 characters long",
+          "server": {
+            "incorrectPassword": "Password is invalid"
+          }
+        }
+      }
+    },
+    "or": "OR"
+  }
+}
