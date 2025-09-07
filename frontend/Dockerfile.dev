@@ -1,0 +1,29 @@
+# Multi-stage build for development
+FROM node:20-alpine as base
+
+# Install dependencies only when needed
+RUN apk add --no-cache libc6-compat curl
+WORKDIR /usr/src/app
+
+# Install dependencies based on the preferred package manager
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+FROM base as development
+# Copy source code
+COPY . .
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Change ownership of the app directory
+RUN chown -R nextjs:nodejs /usr/src/app
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+ENV NODE_ENV development
+
+CMD ["npm", "run", "start:dev"]

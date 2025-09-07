@@ -1,0 +1,181 @@
+services:
+  postgres:
+    image: postgres:17.5-alpine
+    container_name: postgres
+    restart: unless-stopped
+    env_file: 
+      - .env.shared
+    ports:
+      - ${DATABASE_PORT:-5432}:5432
+    volumes:
+      - ai-chat-db:/var/lib/postgresql/data
+      - ./backend/database/init:/docker-entrypoint-initdb.d
+    environment:
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - app-network
+
+  maildev:
+    build:
+      context: .
+      dockerfile: backend/maildev.Dockerfile
+    env_file:
+      - .env.shared
+    ports:
+      - ${MAIL_CLIENT_PORT}:1080
+      - ${MAIL_PORT}:1025
+    networks:
+      - app-network
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - 6379:6379
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - app-network
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    restart: always
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - 8081:8081
+    depends_on:
+      - redis
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend
+    restart: unless-stopped
+    env_file:
+      - .env.shared
+      - .env.backend
+    environment:
+      - NODE_ENV=development
+    ports:
+      - 4343:4343
+    volumes:
+      - ./.env.shared:/usr/src/app/../.env.shared:ro
+      - ./.env.backend:/usr/src/app/../.env.backend:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4343/api/v1/home/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: frontend
+    restart: unless-stopped
+    env_file:
+      - .env.frontend
+    ports:
+      - 3000:3000
+    volumes:
+      - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules
+      - /usr/src/app/.next
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - app-network
+
+  telegram-client:
+    build:
+      context: ./telegram-client
+      dockerfile: Dockerfile
+      target: development
+    container_name: telegram-client
+    restart: unless-stopped
+    env_file:
+      - .env.shared
+      - .env.telegram
+    volumes:
+      - ./telegram-client/src:/usr/src/app/src
+    command: npm run start:dev
+    depends_on:
+      backend:
+        condition: service_healthy
+      agent:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  agent:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+      target: development
+    container_name: agent
+    restart: unless-stopped
+    ports:
+      - 8000:8000
+    env_file:
+      - .env.shared
+      - .env.agent
+    volumes:
+      - ./agent:/usr/src/app
+      - /usr/src/app/__pycache__
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - app-network
+
+volumes:
+  ai-chat-db:
+  redis-data:
+  telegram-node-modules:
+
+networks:
+  app-network:
+    driver: bridge

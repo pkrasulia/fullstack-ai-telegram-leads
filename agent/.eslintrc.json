@@ -1,0 +1,20 @@
+{
+  "root": true,
+  "ignorePatterns": [
+    "**/*.py",
+    "*.py",
+    "telegram-assistant/**/*",
+    ".env*",
+    "*.toml",
+    "*.md"
+  ],
+  "overrides": [
+    {
+      "files": ["telegram-client/**/*.ts", "telegram-client/**/*.js"],
+      "parserOptions": {
+        "project": "./telegram-client/tsconfig.json"
+      },
+      "extends": ["eslint:recommended", "@typescript-eslint/recommended"]
+    }
+  ]
+}
