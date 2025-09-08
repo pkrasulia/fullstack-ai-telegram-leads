@@ -47,12 +47,12 @@ def _validate_name(name: str) -> bool:
     # Only allow letters, spaces, and hyphens
     return bool(re.match(r'^[a-zA-Zа-яА-ЯёЁ\s\-]+$', name.strip()))
 
-def _validate_city(city: str) -> bool:
-    """Validate city name."""
-    if not city or len(city.strip()) < 2:
-        return False
-    # Basic validation - only letters, spaces, and hyphens
-    return bool(re.match(r'^[a-zA-Zа-яА-ЯёЁ\s\-]+$', city.strip()))
+def _validate_email(email: str) -> bool:
+    """Validate email format."""
+    if not email:
+        return True  # Email is optional
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return bool(re.match(email_pattern, email.strip()))
 
 def _normalize_phone(phone: str) -> str:
     """Normalize phone to +7XXXXXXXXXX format."""
@@ -63,17 +63,18 @@ def _normalize_phone(phone: str) -> str:
 
 def send_lead_to_backend(lead_data: dict) -> dict:
     """
-    Sends a lead to the backend with validation and retry logic.
+    Sends a lead to the backend API with validation and retry logic.
 
     Args:
         lead_data (dict): The lead data to send to the backend.
-                         Must contain: name, phone, city
+                         Must contain: name, phone
+                         Optional: email, telegramUsername, telegramId, company, position, notes
 
     Returns:
         dict: A dictionary with the status and message.
 
     Example:
-        >>> send_lead_to_backend(lead_data={'name': 'Иван', 'phone': '+79901234567', 'city': 'Москва'})
+        >>> send_lead_to_backend(lead_data={'name': 'Иван Петров', 'phone': '+79901234567', 'email': 'ivan@example.com'})
         {'status': 'success', 'message': 'Lead sent to backend successfully.'}
     """
     try:
@@ -83,64 +84,96 @@ def send_lead_to_backend(lead_data: dict) -> dict:
         
         name = lead_data.get('name', '').strip()
         phone = lead_data.get('phone', '').strip()
-        city = lead_data.get('city', '').strip()
+        email = lead_data.get('email', '').strip() if lead_data.get('email') else None
+        telegram_username = lead_data.get('telegramUsername', '').strip() if lead_data.get('telegramUsername') else None
+        telegram_id = lead_data.get('telegramId', '').strip() if lead_data.get('telegramId') else None
+        company = lead_data.get('company', '').strip() if lead_data.get('company') else None
+        position = lead_data.get('position', '').strip() if lead_data.get('position') else None
+        notes = lead_data.get('notes', '').strip() if lead_data.get('notes') else None
         
-        # Validate name
+        # Validate required fields
         if not _validate_name(name):
             return {"status": "error", "message": "Invalid name format"}
         
-        # Validate phone
         if not _validate_phone(phone):
             return {"status": "error", "message": "Invalid phone number format"}
         
-        # Validate city
-        if not _validate_city(city):
-            return {"status": "error", "message": "Invalid city format"}
+        # Validate optional email
+        if email and not _validate_email(email):
+            return {"status": "error", "message": "Invalid email format"}
         
-        # Normalize data
-        normalized_data = {
+        # Prepare data for backend API
+        api_data = {
             'name': name,
             'phone': _normalize_phone(phone),
-            'city': city,
-            'timestamp': int(time.time()),
-            'source': 'telegram_agent'
+            'status': 'new',
+            'source': 'telegram'
         }
         
-        logger.info(">>> Sending validated lead to backend: %s", normalized_data)
+        # Add optional fields if provided
+        if email:
+            api_data['email'] = email
+        if telegram_username:
+            api_data['telegramUsername'] = telegram_username
+        if telegram_id:
+            api_data['telegramId'] = telegram_id
+        if company:
+            api_data['company'] = company
+        if position:
+            api_data['position'] = position
+        if notes:
+            api_data['notes'] = notes
         
-        # Send data to webhook.site with retry logic
-        webhook_url = "https://webhook.site/5f23d5f7-f496-46ae-8910-2945ce9134a8"
+        logger.info(">>> Sending validated lead to backend API: %s", api_data)
+        
+        # Send data to backend API with retry logic
+        backend_url = "http://backend:4343/api/v1/leads"
         max_retries = 3
         
         for attempt in range(max_retries):
             try:
                 response = requests.post(
-                    webhook_url,
-                    json=normalized_data,
+                    backend_url,
+                    json=api_data,
                     headers={'Content-Type': 'application/json'},
                     timeout=10
                 )
                 
-                if response.status_code == 200:
-                    logger.info("Webhook call successful on attempt %d", attempt + 1)
+                if response.status_code in [200, 201]:
+                    logger.info("Backend API call successful on attempt %d", attempt + 1)
+                    response_data = response.json() if response.content else {}
                     return {
                         "status": "success", 
-                        "message": "Lead sent to webhook successfully.",
-                        "lead_id": f"lead_{int(time.time())}",
-                        "webhook_response": response.text
+                        "message": "Lead sent to backend successfully.",
+                        "lead_id": response_data.get('id', f"lead_{int(time.time())}"),
+                        "lead_data": response_data
                     }
                 else:
-                    raise Exception(f"HTTP {response.status_code}: {response.text}")
+                    error_msg = f"HTTP {response.status_code}"
+                    try:
+                        error_details = response.json()
+                        error_msg += f": {error_details}"
+                    except:
+                        error_msg += f": {response.text}"
+                    raise Exception(error_msg)
                     
-            except Exception as e:
-                logger.warning("Webhook call failed on attempt %d: %s", attempt + 1, str(e))
+            except requests.exceptions.ConnectionError as e:
+                logger.warning("Backend connection failed on attempt %d: %s", attempt + 1, str(e))
                 if attempt == max_retries - 1:
                     return {
                         "status": "error", 
-                        "message": f"Failed to send lead to webhook after {max_retries} attempts: {str(e)}"
+                        "message": f"Failed to connect to backend after {max_retries} attempts. Please check if backend is running on {backend_url}"
+                    }
+                time.sleep(2)  # Wait longer for connection issues
+            except Exception as e:
+                logger.warning("Backend API call failed on attempt %d: %s", attempt + 1, str(e))
+                if attempt == max_retries - 1:
+                    return {
+                        "status": "error", 
+                        "message": f"Failed to send lead to backend after {max_retries} attempts: {str(e)}"
                     }
                 time.sleep(1)  # Wait before retry
                 
     except Exception as e:
         logger.error("Unexpected error in send_lead_to_backend: %s", str(e))
-        return {"status": "error", "message": "Internal server error"}
+        return {"status": "error", "message": f"Internal server error: {str(e)}"}

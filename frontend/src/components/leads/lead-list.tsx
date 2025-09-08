@@ -17,7 +17,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-import { File, ListFilter, Phone, Mail, MessageCircle } from 'lucide-react';
+import { File, ListFilter, Phone, Mail, MessageCircle, Search, Building2, User } from 'lucide-react';
 
 import {
   DropdownMenu,
@@ -31,90 +31,114 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { useState, useEffect } from 'react';
 
 interface Lead {
-  id: string;
-  firstName: string;
-  lastName: string;
-  username?: string;
-  phone?: string;
+  id: number;
+  name: string;
   email?: string;
-  source: string;
-  status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
-  lastActivity: string;
-  createdAt: string;
+  phone?: string;
+  telegramUsername?: string;
   telegramId?: string;
+  company?: string;
+  position?: string;
   notes?: string;
+  status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
+  source: 'telegram' | 'website' | 'referral' | 'social_media' | 'other';
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Mock data for leads
 const mockLeads: Lead[] = [
   {
-    id: '1',
-    firstName: 'Алексей',
-    lastName: 'Иванов',
-    username: '@alexivanov',
-    phone: '+7 (999) 123-45-67',
-    email: 'alex@example.com',
-    source: 'Telegram',
-    status: 'new',
-    lastActivity: '2024-01-19T10:30:00Z',
-    createdAt: '2024-01-19T10:30:00Z',
+    id: 1,
+    name: 'Иван Петров',
+    email: 'ivan.petrov@example.com',
+    phone: '+7 912 345 67 89',
+    telegramUsername: '@ivan_petrov',
     telegramId: '123456789',
-    notes: 'Интересуется продуктом, запросил демо'
+    company: 'TechSolutions',
+    position: 'Frontend Developer',
+    notes: 'Интересуется новыми технологиями, нужно отправить презентацию',
+    status: 'new',
+    source: 'telegram',
+    createdAt: '2025-09-08T22:01:07.580Z',
+    updatedAt: '2025-09-08T22:01:07.580Z'
   },
   {
-    id: '2',
-    firstName: 'Мария',
-    lastName: 'Петрова',
-    username: '@mariapetrova',
-    phone: '+7 (999) 234-56-78',
-    source: 'Telegram',
-    status: 'contacted',
-    lastActivity: '2024-01-18T15:45:00Z',
-    createdAt: '2024-01-18T09:20:00Z',
+    id: 2,
+    name: 'Мария Сидорова',
+    email: 'maria.sidorova@company.ru',
+    phone: '+7 999 234 56 78',
+    telegramUsername: '@maria_sidorova',
     telegramId: '987654321',
-    notes: 'Отправлено коммерческое предложение'
+    company: 'Digital Agency',
+    position: 'Marketing Manager',
+    notes: 'Отправлено коммерческое предложение, ждем ответа',
+    status: 'contacted',
+    source: 'telegram',
+    createdAt: '2025-09-07T15:30:00.000Z',
+    updatedAt: '2025-09-08T10:15:00.000Z'
   },
   {
-    id: '3',
-    firstName: 'Дмитрий',
-    lastName: 'Сидоров',
-    username: '@dmitrysidorov',
-    email: 'dmitry@company.ru',
-    source: 'Telegram',
-    status: 'qualified',
-    lastActivity: '2024-01-17T12:15:00Z',
-    createdAt: '2024-01-16T14:30:00Z',
+    id: 3,
+    name: 'Алексей Козлов',
+    email: 'alex.kozlov@startup.io',
+    phone: '+7 985 123 45 67',
+    telegramUsername: '@alex_kozlov',
     telegramId: '456789123',
-    notes: 'Готов к покупке, обсуждаем условия'
+    company: 'StartupIO',
+    position: 'CTO',
+    notes: 'Готов к покупке, обсуждаем технические детали',
+    status: 'qualified',
+    source: 'telegram',
+    createdAt: '2025-09-06T12:00:00.000Z',
+    updatedAt: '2025-09-08T14:20:00.000Z'
   },
   {
-    id: '4',
-    firstName: 'Елена',
-    lastName: 'Козлова',
-    username: '@elenakozlova',
-    phone: '+7 (999) 345-67-89',
-    source: 'Telegram',
-    status: 'converted',
-    lastActivity: '2024-01-15T16:20:00Z',
-    createdAt: '2024-01-10T11:45:00Z',
+    id: 4,
+    name: 'Елена Морозова',
+    email: 'elena@bigcorp.com',
+    phone: '+7 926 789 01 23',
+    telegramUsername: '@elena_morozova',
     telegramId: '789123456',
-    notes: 'Успешная конверсия, клиент доволен'
+    company: 'BigCorp',
+    position: 'Product Owner',
+    notes: 'Успешная конверсия, подписан контракт',
+    status: 'converted',
+    source: 'website',
+    createdAt: '2025-09-05T09:30:00.000Z',
+    updatedAt: '2025-09-08T16:45:00.000Z'
   },
   {
-    id: '5',
-    firstName: 'Сергей',
-    lastName: 'Морозов',
-    username: '@sergeymorozov',
-    source: 'Telegram',
-    status: 'lost',
-    lastActivity: '2024-01-14T09:10:00Z',
-    createdAt: '2024-01-12T13:25:00Z',
+    id: 5,
+    name: 'Дмитрий Волков',
+    phone: '+7 903 456 78 90',
+    telegramUsername: '@dmitry_volkov',
     telegramId: '321654987',
-    notes: 'Не подошла цена, ушел к конкурентам'
+    company: 'FreelanceStudio',
+    notes: 'Не подошла цена, ушел к конкурентам',
+    status: 'lost',
+    source: 'referral',
+    createdAt: '2025-09-04T11:15:00.000Z',
+    updatedAt: '2025-09-07T13:30:00.000Z'
+  },
+  {
+    id: 6,
+    name: 'Анна Белова',
+    email: 'anna.belova@design.studio',
+    telegramUsername: '@anna_belova',
+    telegramId: '654321098',
+    company: 'Design Studio',
+    position: 'UI/UX Designer',
+    notes: 'Заинтересована в долгосрочном сотрудничестве',
+    status: 'new',
+    source: 'social_media',
+    createdAt: '2025-09-08T18:20:00.000Z',
+    updatedAt: '2025-09-08T18:20:00.000Z'
   }
 ];
 
@@ -134,6 +158,14 @@ const statusLabels = {
   lost: 'Потерян'
 };
 
+const sourceLabels = {
+  telegram: 'Telegram',
+  website: 'Сайт',
+  referral: 'Реферал',
+  social_media: 'Соц. сети',
+  other: 'Другое'
+};
+
 interface LeadListProps {
   selectedLead?: Lead | null;
   onLeadSelect?: (lead: Lead) => void;
@@ -142,8 +174,20 @@ interface LeadListProps {
 export function LeadList({ selectedLead, onLeadSelect }: LeadListProps) {
   const [leads, setLeads] = useState<Lead[]>(mockLeads);
   const [activeTab, setActiveTab] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const filteredLeads = leads.filter(lead => {
+    // Filter by search query
+    const matchesSearch = searchQuery === '' || 
+      lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lead.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lead.phone?.includes(searchQuery) ||
+      lead.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lead.telegramUsername?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    if (!matchesSearch) return false;
+    
+    // Filter by tab
     if (activeTab === 'all') return true;
     if (activeTab === 'new') return lead.status === 'new';
     if (activeTab === 'active') return ['contacted', 'qualified'].includes(lead.status);
@@ -156,18 +200,22 @@ export function LeadList({ selectedLead, onLeadSelect }: LeadListProps) {
   };
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab}>
-      <div className="flex items-center">
-        <TabsList>
-          <TabsTrigger value="all">Все</TabsTrigger>
-          <TabsTrigger value="new">Новые</TabsTrigger>
-          <TabsTrigger value="active">Активные</TabsTrigger>
-          <TabsTrigger value="converted">Конверсии</TabsTrigger>
-        </TabsList>
-        <div className="ml-auto flex items-center gap-2">
+    <div className="space-y-4">
+      {/* Search and Filters */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Поиск по имени, email, компании..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-7 gap-1 text-sm">
+              <Button variant="outline" size="sm" className="h-8 gap-1 text-sm">
                 <ListFilter className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only">Фильтр</span>
               </Button>
@@ -183,12 +231,21 @@ export function LeadList({ selectedLead, onLeadSelect }: LeadListProps) {
               <DropdownMenuCheckboxItem>Конверсии</DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button size="sm" variant="outline" className="h-7 gap-1 text-sm">
+          <Button size="sm" variant="outline" className="h-8 gap-1 text-sm">
             <File className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only">Экспорт</span>
           </Button>
         </div>
       </div>
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="all">Все ({leads.length})</TabsTrigger>
+          <TabsTrigger value="new">Новые ({leads.filter(l => l.status === 'new').length})</TabsTrigger>
+          <TabsTrigger value="active">Активные ({leads.filter(l => ['contacted', 'qualified'].includes(l.status)).length})</TabsTrigger>
+          <TabsTrigger value="converted">Конверсии ({leads.filter(l => l.status === 'converted').length})</TabsTrigger>
+        </TabsList>
       <TabsContent value={activeTab}>
         <Card x-chunk="dashboard-05-chunk-3">
           <CardHeader className="px-7">
@@ -208,7 +265,7 @@ export function LeadList({ selectedLead, onLeadSelect }: LeadListProps) {
                       Статус
                     </TableHead>
                     <TableHead className="hidden md:table-cell">
-                      Последняя активность
+                      Дата создания
                     </TableHead>
                     <TableHead className="text-right">Действия</TableHead>
                   </TableRow>
@@ -225,32 +282,39 @@ export function LeadList({ selectedLead, onLeadSelect }: LeadListProps) {
                       }`}
                     >
                       <TableCell>
-                        <div className="font-medium">
-                          {lead.firstName} {lead.lastName}
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          {lead.username && (
-                            <span className="flex items-center gap-1">
-                              <MessageCircle className="h-3 w-3" />
-                              {lead.username}
-                            </span>
+                        <div className="space-y-1">
+                          <div className="font-medium">{lead.name}</div>
+                          {lead.company && (
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Building2 className="h-3 w-3" />
+                              <span>{lead.company}</span>
+                              {lead.position && <span>• {lead.position}</span>}
+                            </div>
                           )}
-                          {lead.phone && (
-                            <span className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" />
-                              {lead.phone}
-                            </span>
-                          )}
-                          {lead.email && (
-                            <span className="flex items-center gap-1">
-                              <Mail className="h-3 w-3" />
-                              {lead.email}
-                            </span>
-                          )}
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            {lead.telegramUsername && (
+                              <span className="flex items-center gap-1">
+                                <MessageCircle className="h-3 w-3" />
+                                {lead.telegramUsername}
+                              </span>
+                            )}
+                            {lead.phone && (
+                              <span className="flex items-center gap-1">
+                                <Phone className="h-3 w-3" />
+                                {lead.phone}
+                              </span>
+                            )}
+                            {lead.email && (
+                              <span className="flex items-center gap-1">
+                                <Mail className="h-3 w-3" />
+                                {lead.email}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <Badge variant="outline">{lead.source}</Badge>
+                        <Badge variant="outline">{sourceLabels[lead.source]}</Badge>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
                         <Badge 
@@ -261,13 +325,19 @@ export function LeadList({ selectedLead, onLeadSelect }: LeadListProps) {
                         </Badge>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        {new Date(lead.lastActivity).toLocaleDateString('ru-RU', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                        <div className="text-sm">
+                          {new Date(lead.createdAt).toLocaleDateString('ru-RU', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          })}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(lead.createdAt).toLocaleTimeString('ru-RU', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="sm">
@@ -289,6 +359,7 @@ export function LeadList({ selectedLead, onLeadSelect }: LeadListProps) {
           </CardContent>
         </Card>
       </TabsContent>
-    </Tabs>
+      </Tabs>
+    </div>
   );
 }
