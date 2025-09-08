@@ -85,6 +85,7 @@ services:
     ports:
       - 4343:4343
     volumes:
+      - ./backend:/usr/src/app
       - ./.env.shared:/usr/src/app/../.env.shared:ro
       - ./.env.backend:/usr/src/app/../.env.backend:ro
     healthcheck:
