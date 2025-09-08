@@ -12,6 +12,11 @@ import {
   Phone,
   Mail,
   Upload,
+  Search,
+  Filter,
+  Plus,
+  Building2,
+  User,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -52,18 +57,19 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 interface Lead {
-  id: string;
-  firstName: string;
-  lastName: string;
-  username?: string;
-  phone?: string;
+  id: number;
+  name: string;
   email?: string;
-  source: string;
-  status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
-  lastActivity: string;
-  createdAt: string;
+  phone?: string;
+  telegramUsername?: string;
   telegramId?: string;
+  company?: string;
+  position?: string;
   notes?: string;
+  status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
+  source: 'telegram' | 'website' | 'referral' | 'social_media' | 'other';
+  createdAt: string;
+  updatedAt: string;
 }
 
 function LeadsPage() {
@@ -85,7 +91,7 @@ function LeadsPage() {
   const handleLeadDelete = () => {
     if (selectedLead) {
       toast('Лид удален', {
-        description: `${selectedLead.firstName} ${selectedLead.lastName} удален из базы`,
+        description: `${selectedLead.name} удален из базы`,
         action: {
           label: 'Отменить',
           onClick: () => console.log('Undo delete'),
@@ -96,87 +102,78 @@ function LeadsPage() {
   };
 
   return (
-    <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8 lg:grid-cols-3 xl:grid-cols-3 mt-10">
-      <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
-          <Card className="sm:col-span-2" x-chunk="dashboard-05-chunk-0">
-            <CardHeader className="pb-3">
-              <CardTitle>Воронка продаж</CardTitle>
-              <CardDescription className="max-w-lg text-balance leading-relaxed">
-                Аналитика конверсий по этапам воронки
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-4 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">67</div>
-                  <div className="text-xs text-muted-foreground">Обработка</div>
-                  <div className="text-xs text-green-600">+18%</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">37</div>
-                  <div className="text-xs text-muted-foreground">Квалиф.</div>
-                  <div className="text-xs text-green-600">+15%</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">23</div>
-                  <div className="text-xs text-muted-foreground">Конверсия</div>
-                  <div className="text-xs text-green-600">+32%</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">15</div>
-                  <div className="text-xs text-muted-foreground">Отказы</div>
-                  <div className="text-xs text-red-600">-5%</div>
-                </div>
-              </div>
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span>Конверсия обработка → квалиф.</span>
-                  <span className="font-medium">55.2%</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span>Конверсия квалиф. → продажа</span>
-                  <span className="font-medium">62.1%</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span>Общая конверсия</span>
-                  <span className="font-medium text-green-600">34.3%</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card x-chunk="dashboard-05-chunk-1">
-            <CardHeader className="pb-2">
-              <CardDescription>Всего лидов</CardDescription>
-              <CardTitle className="text-4xl">127</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-xs text-muted-foreground">
-                +18% к прошлому месяцу
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Progress value={18} aria-label="18% increase" />
-            </CardFooter>
-          </Card>
-          <Card x-chunk="dashboard-05-chunk-2">
-            <CardHeader className="pb-2">
-              <CardDescription>Конверсии</CardDescription>
-              <CardTitle className="text-4xl">23</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-xs text-muted-foreground">
-                +32% к прошлому <br />
-                месяцу
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Progress value={32} aria-label="32% increase" />
-            </CardFooter>
-          </Card>
+    <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Лиды</h1>
+          <p className="text-muted-foreground">
+            Управление лидами из Telegram и других источников
+          </p>
         </div>
-        <LeadList selectedLead={selectedLead} onLeadSelect={setSelectedLead} />
+        <Button className="gap-2">
+          <Plus className="h-4 w-4" />
+          Добавить лида
+        </Button>
       </div>
+
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Всего лидов</CardTitle>
+            <User className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">127</div>
+            <p className="text-xs text-muted-foreground">
+              +18% к прошлому месяцу
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Новые</CardTitle>
+            <MessageCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">67</div>
+            <p className="text-xs text-muted-foreground">
+              +12% за неделю
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Конверсии</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">23</div>
+            <p className="text-xs text-muted-foreground">
+              +32% к прошлому месяцу
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Конверсия</CardTitle>
+            <MessageCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">18.1%</div>
+            <p className="text-xs text-muted-foreground">
+              +2.1% за месяц
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <LeadList selectedLead={selectedLead} onLeadSelect={setSelectedLead} />
+        </div>
       <div style={{ position: 'sticky', top: '70px' }}>
         <Card className="overflow-hidden" x-chunk="dashboard-05-chunk-4">
           <CardHeader className="flex flex-row items-start bg-muted/50">
@@ -194,7 +191,7 @@ function LeadsPage() {
               </CardTitle>
               <CardDescription>
                 {selectedLead ? (
-                  <span>{selectedLead.firstName} {selectedLead.lastName}</span>
+                  <span>{selectedLead.name}</span>
                 ) : (
                   <span>Лид не выбран</span>
                 )}
@@ -211,7 +208,7 @@ function LeadsPage() {
                       </span>
                     </Button>
                   )}
-                  {selectedLead.username && (
+                  {selectedLead.telegramUsername && (
                     <Button size="sm" variant="outline" className="h-8 gap-1">
                       <MessageCircle className="h-3.5 w-3.5" />
                       <span className="lg:sr-only xl:not-sr-only xl:whitespace-nowrap">
@@ -255,42 +252,66 @@ function LeadsPage() {
           <CardContent className="p-6 text-sm">
             {selectedLead ? (
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">Имя</label>
-                    <p className="text-sm">{selectedLead.firstName} {selectedLead.lastName}</p>
+                    <p className="text-sm font-medium">{selectedLead.name}</p>
                   </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground">Статус</label>
-                    <p className="text-sm capitalize">{selectedLead.status}</p>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">Статус</label>
+                      <p className="text-sm capitalize">{selectedLead.status}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">Источник</label>
+                      <p className="text-sm capitalize">{selectedLead.source}</p>
+                    </div>
                   </div>
-                  {selectedLead.username && (
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">Telegram</label>
-                      <p className="text-sm">{selectedLead.username}</p>
+
+                  {(selectedLead.company || selectedLead.position) && (
+                    <div className="grid grid-cols-2 gap-4">
+                      {selectedLead.company && (
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground">Компания</label>
+                          <p className="text-sm">{selectedLead.company}</p>
+                        </div>
+                      )}
+                      {selectedLead.position && (
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground">Должность</label>
+                          <p className="text-sm">{selectedLead.position}</p>
+                        </div>
+                      )}
                     </div>
                   )}
-                  {selectedLead.phone && (
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">Телефон</label>
-                      <p className="text-sm">{selectedLead.phone}</p>
-                    </div>
-                  )}
-                  {selectedLead.email && (
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">Email</label>
-                      <p className="text-sm">{selectedLead.email}</p>
-                    </div>
-                  )}
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground">Источник</label>
-                    <p className="text-sm">{selectedLead.source}</p>
+
+                  <div className="space-y-3">
+                    {selectedLead.email && (
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground">Email</label>
+                        <p className="text-sm">{selectedLead.email}</p>
+                      </div>
+                    )}
+                    {selectedLead.phone && (
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground">Телефон</label>
+                        <p className="text-sm">{selectedLead.phone}</p>
+                      </div>
+                    )}
+                    {selectedLead.telegramUsername && (
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground">Telegram</label>
+                        <p className="text-sm">{selectedLead.telegramUsername}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
+                
                 {selectedLead.notes && (
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">Заметки</label>
-                    <p className="text-sm mt-1">{selectedLead.notes}</p>
+                    <p className="text-sm mt-1 p-3 bg-muted/50 rounded-md">{selectedLead.notes}</p>
                   </div>
                 )}
               </div>
@@ -337,6 +358,7 @@ function LeadsPage() {
             </Pagination>
           </CardFooter>
         </Card>
+        </div>
       </div>
     </main>
   );
