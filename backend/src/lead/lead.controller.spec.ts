@@ -78,9 +78,7 @@ describe('LeadController', () => {
     });
 
     it('should return leads filtered by status', async () => {
-      const mockLeads = [
-        { id: 1, name: 'John Doe', status: LeadStatus.NEW },
-      ];
+      const mockLeads = [{ id: 1, name: 'John Doe', status: LeadStatus.NEW }];
 
       mockLeadService.findByStatus.mockResolvedValue(mockLeads);
 
@@ -125,7 +123,7 @@ describe('LeadController', () => {
     it('should update a lead', async () => {
       const updateLeadDto: UpdateLeadDto = { name: 'Updated Name' };
       const mockLead = { id: 1, name: 'Updated Name', status: LeadStatus.NEW };
-      
+
       mockLeadService.update.mockResolvedValue(mockLead);
 
       const result = await controller.update(1, updateLeadDto);

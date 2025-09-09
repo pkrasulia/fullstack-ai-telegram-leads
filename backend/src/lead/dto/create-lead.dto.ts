@@ -1,4 +1,10 @@
-import { IsString, IsEmail, IsOptional, IsPhoneNumber, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsOptional,
+  IsPhoneNumber,
+  IsEnum,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export enum LeadStatus {
@@ -57,12 +63,20 @@ export class CreateLeadDto {
   @IsString()
   notes?: string;
 
-  @ApiProperty({ enum: LeadStatus, description: 'Статус лида', default: LeadStatus.NEW })
+  @ApiProperty({
+    enum: LeadStatus,
+    description: 'Статус лида',
+    default: LeadStatus.NEW,
+  })
   @IsOptional()
   @IsEnum(LeadStatus)
   status?: LeadStatus;
 
-  @ApiProperty({ enum: LeadSource, description: 'Источник лида', default: LeadSource.TELEGRAM })
+  @ApiProperty({
+    enum: LeadSource,
+    description: 'Источник лида',
+    default: LeadSource.TELEGRAM,
+  })
   @IsOptional()
   @IsEnum(LeadSource)
   source?: LeadSource;

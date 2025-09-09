@@ -43,10 +43,12 @@ export default registerAs<AuthConfig>('auth', () => {
   return {
     secret: process.env.AUTH_JWT_SECRET,
     expires: process.env.AUTH_JWT_TOKEN_EXPIRES_IN as ms.StringValue,
-    serviceExpires: process.env.AUTH_JWT_SERVICE_TOKEN_EXPIRES_IN as ms.StringValue,
+    serviceExpires: process.env
+      .AUTH_JWT_SERVICE_TOKEN_EXPIRES_IN as ms.StringValue,
     refreshSecret: process.env.AUTH_REFRESH_SECRET,
     refreshExpires: process.env.AUTH_REFRESH_TOKEN_EXPIRES_IN as ms.StringValue,
-    serviceRefreshExpires: process.env.AUTH_REFRESH_SERVICE_TOKEN_EXPIRES_IN as ms.StringValue,
+    serviceRefreshExpires: process.env
+      .AUTH_REFRESH_SERVICE_TOKEN_EXPIRES_IN as ms.StringValue,
     forgotSecret: process.env.AUTH_FORGOT_SECRET,
     forgotExpires: process.env.AUTH_FORGOT_TOKEN_EXPIRES_IN as ms.StringValue,
     confirmEmailSecret: process.env.AUTH_CONFIRM_EMAIL_SECRET,
