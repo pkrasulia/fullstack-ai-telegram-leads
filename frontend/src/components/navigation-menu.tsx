@@ -35,31 +35,6 @@ const components: { title: string; href: string; description: string }[] = [
     href: '/docs/primitives/alert-dialog',
     description: 'Подробная статистика и метрики по всем процессам',
   },
-  {
-    title: 'Каналы связи',
-    href: '/docs/primitives/hover-card',
-    description: 'Подключение ассистента к мессенджерам и каналам',
-  },
-  {
-    title: 'Обучение ассистентов',
-    href: '/docs/primitives/progress',
-    description: 'Инструменты для обучения и настройки навыков ассистента',
-  },
-  {
-    title: 'Коммуникация',
-    href: '/docs/primitives/scroll-area',
-    description: 'Общение с клиентами из админ панели',
-  },
-  {
-    title: 'Платежи и тариф',
-    href: '/docs/primitives/tabs',
-    description: 'Выбор тарифного плана и оплата',
-  },
-  {
-    title: 'Личные настройки',
-    href: '/docs/primitives/tooltip',
-    description: 'Персональные настройки профиля и интерфейса',
-  },
 ];
 export function TopNavigationMenu() {
   return (
