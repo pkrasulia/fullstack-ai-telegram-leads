@@ -559,7 +559,9 @@ export class AuthService {
       : this.configService.getOrThrow('auth.expires', { infer: true });
 
     const refreshExpiresIn = isServiceAccount
-      ? this.configService.getOrThrow('auth.serviceRefreshExpires', { infer: true })
+      ? this.configService.getOrThrow('auth.serviceRefreshExpires', {
+          infer: true,
+        })
       : this.configService.getOrThrow('auth.refreshExpires', { infer: true });
 
     const tokenExpires = Date.now() + ms(tokenExpiresIn);

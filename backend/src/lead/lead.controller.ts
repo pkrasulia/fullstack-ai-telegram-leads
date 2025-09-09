@@ -1,18 +1,25 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Body, 
-  Patch, 
-  Param, 
-  Delete, 
-  Query, 
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
   ParseIntPipe,
   HttpCode,
   HttpStatus,
-  UseGuards
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../roles/roles.decorator';
 import { RoleEnum } from '../roles/roles.enum';
@@ -44,7 +51,12 @@ export class LeadController {
 
   @Get()
   @ApiOperation({ summary: 'Получить всех лидов' })
-  @ApiQuery({ name: 'status', enum: LeadStatus, required: false, description: 'Фильтр по статусу' })
+  @ApiQuery({
+    name: 'status',
+    enum: LeadStatus,
+    required: false,
+    description: 'Фильтр по статусу',
+  })
   @ApiResponse({ status: 200, description: 'Список лидов', type: [Lead] })
   async findAll(@Query('status') status?: LeadStatus): Promise<Lead[]> {
     if (status) {
@@ -67,7 +79,9 @@ export class LeadController {
   @ApiParam({ name: 'telegramId', description: 'Telegram ID лида' })
   @ApiResponse({ status: 200, description: 'Лид найден', type: Lead })
   @ApiResponse({ status: 404, description: 'Лид не найден' })
-  async findByTelegramId(@Param('telegramId') telegramId: string): Promise<Lead> {
+  async findByTelegramId(
+    @Param('telegramId') telegramId: string,
+  ): Promise<Lead> {
     const lead = await this.leadService.findByTelegramId(telegramId);
     if (!lead) {
       throw new Error(`Lead with Telegram ID ${telegramId} not found`);
@@ -94,8 +108,8 @@ export class LeadController {
   @ApiResponse({ status: 200, description: 'Лид обновлен', type: Lead })
   @ApiResponse({ status: 404, description: 'Лид не найден' })
   async update(
-    @Param('id', ParseIntPipe) id: number, 
-    @Body() updateLeadDto: UpdateLeadDto
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateLeadDto: UpdateLeadDto,
   ): Promise<Lead> {
     return this.leadService.update(id, updateLeadDto);
   }

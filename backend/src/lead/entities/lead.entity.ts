@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { LeadStatus, LeadSource } from '../dto/create-lead.dto';
 
 @Entity('leads')
@@ -15,7 +21,12 @@ export class Lead {
   @Column({ type: 'varchar', length: 50, nullable: true })
   phone?: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true, name: 'telegram_username' })
+  @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+    name: 'telegram_username',
+  })
   telegramUsername?: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true, name: 'telegram_id' })
