@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Lead } from '@/services/api/types/lead';
 
 import {
   Card,
@@ -35,113 +36,6 @@ import { Input } from '@/components/ui/input';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { useState, useEffect } from 'react';
 
-interface Lead {
-  id: number;
-  name: string;
-  email?: string;
-  phone?: string;
-  telegramUsername?: string;
-  telegramId?: string;
-  company?: string;
-  position?: string;
-  notes?: string;
-  status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
-  source: 'telegram' | 'website' | 'referral' | 'social_media' | 'other';
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Mock data for leads
-const mockLeads: Lead[] = [
-  {
-    id: 1,
-    name: 'Иван Петров',
-    email: 'ivan.petrov@example.com',
-    phone: '+7 912 345 67 89',
-    telegramUsername: '@ivan_petrov',
-    telegramId: '123456789',
-    company: 'TechSolutions',
-    position: 'Frontend Developer',
-    notes: 'Интересуется новыми технологиями, нужно отправить презентацию',
-    status: 'new',
-    source: 'telegram',
-    createdAt: '2025-09-08T22:01:07.580Z',
-    updatedAt: '2025-09-08T22:01:07.580Z'
-  },
-  {
-    id: 2,
-    name: 'Мария Сидорова',
-    email: 'maria.sidorova@company.ru',
-    phone: '+7 999 234 56 78',
-    telegramUsername: '@maria_sidorova',
-    telegramId: '987654321',
-    company: 'Digital Agency',
-    position: 'Marketing Manager',
-    notes: 'Отправлено коммерческое предложение, ждем ответа',
-    status: 'contacted',
-    source: 'telegram',
-    createdAt: '2025-09-07T15:30:00.000Z',
-    updatedAt: '2025-09-08T10:15:00.000Z'
-  },
-  {
-    id: 3,
-    name: 'Алексей Козлов',
-    email: 'alex.kozlov@startup.io',
-    phone: '+7 985 123 45 67',
-    telegramUsername: '@alex_kozlov',
-    telegramId: '456789123',
-    company: 'StartupIO',
-    position: 'CTO',
-    notes: 'Готов к покупке, обсуждаем технические детали',
-    status: 'qualified',
-    source: 'telegram',
-    createdAt: '2025-09-06T12:00:00.000Z',
-    updatedAt: '2025-09-08T14:20:00.000Z'
-  },
-  {
-    id: 4,
-    name: 'Елена Морозова',
-    email: 'elena@bigcorp.com',
-    phone: '+7 926 789 01 23',
-    telegramUsername: '@elena_morozova',
-    telegramId: '789123456',
-    company: 'BigCorp',
-    position: 'Product Owner',
-    notes: 'Успешная конверсия, подписан контракт',
-    status: 'converted',
-    source: 'website',
-    createdAt: '2025-09-05T09:30:00.000Z',
-    updatedAt: '2025-09-08T16:45:00.000Z'
-  },
-  {
-    id: 5,
-    name: 'Дмитрий Волков',
-    phone: '+7 903 456 78 90',
-    telegramUsername: '@dmitry_volkov',
-    telegramId: '321654987',
-    company: 'FreelanceStudio',
-    notes: 'Не подошла цена, ушел к конкурентам',
-    status: 'lost',
-    source: 'referral',
-    createdAt: '2025-09-04T11:15:00.000Z',
-    updatedAt: '2025-09-07T13:30:00.000Z'
-  },
-  {
-    id: 6,
-    name: 'Анна Белова',
-    email: 'anna.belova@design.studio',
-    telegramUsername: '@anna_belova',
-    telegramId: '654321098',
-    company: 'Design Studio',
-    position: 'UI/UX Designer',
-    notes: 'Заинтересована в долгосрочном сотрудничестве',
-    status: 'new',
-    source: 'social_media',
-    createdAt: '2025-09-08T18:20:00.000Z',
-    updatedAt: '2025-09-08T18:20:00.000Z'
-  }
-];
-
 const statusColors = {
   new: 'bg-blue-100 text-blue-800',
   contacted: 'bg-yellow-100 text-yellow-800',
@@ -167,12 +61,13 @@ const sourceLabels = {
 };
 
 interface LeadListProps {
+  leads: Lead[];
+  loading?: boolean;
   selectedLead?: Lead | null;
   onLeadSelect?: (lead: Lead) => void;
 }
 
-export function LeadList({ selectedLead, onLeadSelect }: LeadListProps) {
-  const [leads, setLeads] = useState<Lead[]>(mockLeads);
+export function LeadList({ leads, loading = false, selectedLead, onLeadSelect }: LeadListProps) {
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -253,7 +148,11 @@ export function LeadList({ selectedLead, onLeadSelect }: LeadListProps) {
             <CardDescription>Список лидов из Telegram</CardDescription>
           </CardHeader>
           <CardContent>
-            {filteredLeads.length > 0 ? (
+            {loading ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Загрузка лидов...</p>
+              </div>
+            ) : filteredLeads.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>

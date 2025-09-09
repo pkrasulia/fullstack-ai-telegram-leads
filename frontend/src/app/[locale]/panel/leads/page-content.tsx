@@ -18,6 +18,8 @@ import {
   Building2,
   User,
 } from 'lucide-react';
+import { useGetLeadsService, useGetLeadsByStatusService } from '@/services/api/services/leads';
+import { Lead, LeadStatus } from '@/services/api/types/lead';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -53,30 +55,72 @@ import {
 import { SheetClose, SheetFooter } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { LeadList } from '@/components/leads/lead-list';
-import { useState } from 'react';
+import { EditLeadDialog } from '@/components/leads/edit-lead-dialog';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-
-interface Lead {
-  id: number;
-  name: string;
-  email?: string;
-  phone?: string;
-  telegramUsername?: string;
-  telegramId?: string;
-  company?: string;
-  position?: string;
-  notes?: string;
-  status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
-  source: 'telegram' | 'website' | 'referral' | 'social_media' | 'other';
-  createdAt: string;
-  updatedAt: string;
-}
 
 function LeadsPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [stats, setStats] = useState({
+    total: 0,
+    new: 0,
+    converted: 0,
+    conversionRate: 0
+  });
+  
   const { user: authUser } = useAuth();
   const store = useAppStore();
   const dispatch = useAppDispatch();
+  
+  const getLeadsService = useGetLeadsService();
+  const getNewLeadsService = useGetLeadsByStatusService();
+  const getConvertedLeadsService = useGetLeadsByStatusService();
+
+  useEffect(() => {
+    const fetchLeads = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch all leads
+        const leadsResponse = await getLeadsService({ page: 1, limit: 100 });
+        let allLeads: Lead[] = [];
+        
+        if (Array.isArray(leadsResponse)) {
+          allLeads = leadsResponse;
+        } else if (leadsResponse && typeof leadsResponse === 'object' && 'data' in leadsResponse) {
+          allLeads = Array.isArray(leadsResponse.data) ? leadsResponse.data : [];
+        }
+        
+        setLeads(allLeads);
+        
+        // Calculate stats from existing leads data
+        const totalCount = allLeads.length;
+        const newCount = allLeads.filter(lead => lead.status === LeadStatus.NEW).length;
+        const convertedCount = allLeads.filter(lead => lead.status === LeadStatus.CONVERTED).length;
+        const conversionRate = totalCount > 0 ? (convertedCount / totalCount) * 100 : 0;
+        
+        setStats({
+          total: totalCount,
+          new: newCount,
+          converted: convertedCount,
+          conversionRate: Math.round(conversionRate * 10) / 10
+        });
+        
+      } catch (error) {
+        console.error('Error fetching leads:', error);
+        toast.error('Ошибка загрузки лидов', {
+          description: 'Не удалось загрузить данные с сервера'
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchLeads();
+  }, [getLeadsService, getNewLeadsService, getConvertedLeadsService]);
 
   const handleLeadImport = () => {
     toast('Импорт лидов', {
@@ -85,6 +129,43 @@ function LeadsPage() {
         label: 'Понятно',
         onClick: () => console.log('Import leads'),
       },
+    });
+  };
+
+  const handleLeadEdit = () => {
+    if (selectedLead) {
+      setEditDialogOpen(true);
+    }
+  };
+
+  const handleLeadUpdated = (updatedLead: Lead) => {
+    // Update the lead in the leads array
+    setLeads(prevLeads => 
+      prevLeads.map(lead => 
+        lead.id === updatedLead.id ? updatedLead : lead
+      )
+    );
+    
+    // Update selected lead if it's the same one
+    if (selectedLead && selectedLead.id === updatedLead.id) {
+      setSelectedLead(updatedLead);
+    }
+    
+    // Recalculate stats
+    const updatedLeads = leads.map(lead => 
+      lead.id === updatedLead.id ? updatedLead : lead
+    );
+    
+    const totalCount = updatedLeads.length;
+    const newCount = updatedLeads.filter(lead => lead.status === LeadStatus.NEW).length;
+    const convertedCount = updatedLeads.filter(lead => lead.status === LeadStatus.CONVERTED).length;
+    const conversionRate = totalCount > 0 ? (convertedCount / totalCount) * 100 : 0;
+    
+    setStats({
+      total: totalCount,
+      new: newCount,
+      converted: convertedCount,
+      conversionRate: Math.round(conversionRate * 10) / 10
     });
   };
 
@@ -125,9 +206,9 @@ function LeadsPage() {
             <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">127</div>
+            <div className="text-2xl font-bold">{loading ? '...' : stats.total}</div>
             <p className="text-xs text-muted-foreground">
-              +18% к прошлому месяцу
+              Всего в базе данных
             </p>
           </CardContent>
         </Card>
@@ -137,33 +218,9 @@ function LeadsPage() {
             <MessageCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">67</div>
+            <div className="text-2xl font-bold">{loading ? '...' : stats.new}</div>
             <p className="text-xs text-muted-foreground">
-              +12% за неделю
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Конверсии</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">23</div>
-            <p className="text-xs text-muted-foreground">
-              +32% к прошлому месяцу
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Конверсия</CardTitle>
-            <MessageCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">18.1%</div>
-            <p className="text-xs text-muted-foreground">
-              +2.1% за месяц
+              Требуют обработки
             </p>
           </CardContent>
         </Card>
@@ -172,7 +229,12 @@ function LeadsPage() {
       {/* Main Content */}
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <LeadList selectedLead={selectedLead} onLeadSelect={setSelectedLead} />
+          <LeadList 
+            leads={leads}
+            loading={loading}
+            selectedLead={selectedLead} 
+            onLeadSelect={setSelectedLead} 
+          />
         </div>
       <div style={{ position: 'sticky', top: '70px' }}>
         <Card className="overflow-hidden" x-chunk="dashboard-05-chunk-4">
@@ -200,14 +262,6 @@ function LeadsPage() {
             <div className="ml-auto flex items-center gap-1">
               {selectedLead && (
                 <>
-                  {selectedLead.phone && (
-                    <Button size="sm" variant="outline" className="h-8 gap-1">
-                      <Phone className="h-3.5 w-3.5" />
-                      <span className="lg:sr-only xl:not-sr-only xl:whitespace-nowrap">
-                        Позвонить
-                      </span>
-                    </Button>
-                  )}
                   {selectedLead.telegramUsername && (
                     <Button size="sm" variant="outline" className="h-8 gap-1">
                       <MessageCircle className="h-3.5 w-3.5" />
@@ -217,11 +271,13 @@ function LeadsPage() {
                     </Button>
                   )}
                   {selectedLead.email && (
-                    <Button size="sm" variant="outline" className="h-8 gap-1">
-                      <Mail className="h-3.5 w-3.5" />
-                      <span className="lg:sr-only xl:not-sr-only xl:whitespace-nowrap">
-                        Email
-                      </span>
+                    <Button size="sm" variant="outline" className="h-8 gap-1" asChild>
+                      <a href={`mailto:${selectedLead.email}`}>
+                        <Mail className="h-3.5 w-3.5" />
+                        <span className="lg:sr-only xl:not-sr-only xl:whitespace-nowrap">
+                          Email
+                        </span>
+                      </a>
                     </Button>
                   )}
                 </>
@@ -239,7 +295,7 @@ function LeadsPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>Редактировать</DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLeadEdit}>Редактировать</DropdownMenuItem>
                   <DropdownMenuItem>Изменить статус</DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLeadDelete}>
@@ -290,7 +346,7 @@ function LeadsPage() {
                     {selectedLead.email && (
                       <div>
                         <label className="text-xs font-medium text-muted-foreground">Email</label>
-                        <p className="text-sm">{selectedLead.email}</p>
+<p className="text-sm">{selectedLead.email}</p>
                       </div>
                     )}
                     {selectedLead.phone && (
@@ -360,6 +416,13 @@ function LeadsPage() {
         </Card>
         </div>
       </div>
+      
+      <EditLeadDialog
+        lead={selectedLead}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onLeadUpdated={handleLeadUpdated}
+      />
     </main>
   );
 }
