@@ -74,5 +74,35 @@ export class UserSeedService {
         }),
       );
     }
+
+    const countService = await this.repository.count({
+      where: {
+        role: {
+          id: RoleEnum.service,
+        },
+      },
+    });
+
+    if (!countService) {
+      const salt = await bcrypt.genSalt();
+      const password = await bcrypt.hash('secret', salt);
+
+      await this.repository.save(
+        this.repository.create({
+          firstName: 'Service',
+          lastName: 'Bot',
+          email: 'service@example.com',
+          password,
+          role: {
+            id: RoleEnum.service,
+            name: 'Service',
+          },
+          status: {
+            id: StatusEnum.active,
+            name: 'Active',
+          },
+        }),
+      );
+    }
   }
 }
