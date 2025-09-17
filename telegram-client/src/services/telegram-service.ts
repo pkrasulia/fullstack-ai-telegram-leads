@@ -1,11 +1,14 @@
 import TelegramBot, { Message } from "node-telegram-bot-api";
 import { telegramLogger } from "../app/logs/logger";
+import { MessageStorageService, MessageDirection } from "./message-storage-service";
 
 export class TelegramService {
   private bot: TelegramBot;
+  private messageStorageService: MessageStorageService;
 
   constructor(token: string) {
     telegramLogger.info("Initializing Telegram service");
+    this.messageStorageService = new MessageStorageService();
     this.bot = new TelegramBot(token, {
       polling: {
         interval: 300,
@@ -57,7 +60,14 @@ export class TelegramService {
       await this.simulateTyping(chatId, businessConnectionId, text);
       try {
         const options = businessConnectionId ? ({ business_connection_id: businessConnectionId } as any) : {};
-        await this.bot.sendMessage(chatId, text, options);
+        const sentMessage = await this.bot.sendMessage(chatId, text, options);
+        
+        // Сохраняем исходящее сообщение в БД
+        await this.messageStorageService.saveOutgoingMessage(
+          sentMessage as Message, 
+          !!businessConnectionId, 
+          businessConnectionId
+        );
       } catch (error: any) {
         telegramLogger.error("Error sending single message", {
           chatId,
@@ -78,7 +88,14 @@ export class TelegramService {
 
       try {
         const options = businessConnectionId ? ({ business_connection_id: businessConnectionId } as any) : {};
-        await this.bot.sendMessage(chatId, messageText, options);
+        const sentMessage = await this.bot.sendMessage(chatId, messageText, options);
+        
+        // Сохраняем каждую часть исходящего сообщения в БД
+        await this.messageStorageService.saveOutgoingMessage(
+          sentMessage as Message, 
+          !!businessConnectionId, 
+          businessConnectionId
+        );
 
         if (i < sentences.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 800));
@@ -98,7 +115,14 @@ export class TelegramService {
   async sendMessage(chatId: number, text: string, businessConnectionId?: string): Promise<void> {
     try {
       const options = businessConnectionId ? ({ business_connection_id: businessConnectionId } as any) : {};
-      await this.bot.sendMessage(chatId, text, options);
+      const sentMessage = await this.bot.sendMessage(chatId, text, options);
+      
+      // Сохраняем исходящее сообщение в БД
+      await this.messageStorageService.saveOutgoingMessage(
+        sentMessage as Message, 
+        !!businessConnectionId, 
+        businessConnectionId
+      );
     } catch (error: any) {
       telegramLogger.error("Error sending message", {
         chatId,
@@ -128,5 +152,9 @@ export class TelegramService {
   stopPolling(): void {
     telegramLogger.info("Stopping Telegram bot polling");
     this.bot.stopPolling();
+  }
+
+  getBot(): TelegramBot {
+    return this.bot;
   }
 }

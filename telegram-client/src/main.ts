@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import { Message } from "node-telegram-bot-api";
 import { checkAdkConnection, getOrCreateUserSession, loadUserSessions, saveUserSessions, sendMessageToAdk } from "services/adk-service";
 import { TelegramService } from "./services/telegram-service";
+import { MessageStorageService, MessageDirection } from "./services/message-storage-service";
 import { mainLogger } from "./app/logs/logger";
 
 dotenv.config({ path: "../../.env" });
@@ -23,6 +24,7 @@ if (!token || token === "YOUR_BOT_TOKEN_HERE") {
 }
 
 const telegramService = new TelegramService(token);
+const messageStorageService = new MessageStorageService();
 
 // Настройки
 let assistantEnabled = true;
@@ -54,23 +56,33 @@ telegramService.onBusinessConnection((connection: any) => {
   });
 });
 
-// Главная логика обработки бизнес-сообщений
+// Главная логика// Обработчик business сообщений
 telegramService.onBusinessMessage(async (msg: any) => {
   if (!assistantEnabled) return;
 
   const chatId = msg.chat.id;
-  const businessConnectionId = msg.business_connection_id;
   const messageText = msg.text || "";
-  const userName = msg.from?.first_name || "user";
+  const businessConnectionId = msg.business_connection_id;
+
+  // Сохраняем сообщение в базу данных
+  await messageStorageService.saveIncomingMessage(msg, true, businessConnectionId);
 
   mainLogger.info("Business message received", {
-    userName,
     chatId,
-    messageText: messageText.substring(0, 100) + (messageText.length > 100 ? "..." : ""),
+    messageText: messageText.substring(0, 100),
+    userName: msg.from?.first_name || "Unknown",
+    businessConnectionId
   });
+
+  // Проверяем, является ли сообщение командой
+  if (messageText.startsWith('/')) {
+    mainLogger.info("Business message is a command, processing separately", { command: messageText });
+    return; // Команды не отправляем в ADK
+  }
 
   try {
     // Получаем или создаем сессию
+    const userName = msg.from?.first_name || "Unknown";
     const session = await getOrCreateUserSession(chatId, userName);
     if (!session) {
       mainLogger.error("Failed to get user session", { chatId, userName });
@@ -101,7 +113,7 @@ telegramService.onBusinessMessage(async (msg: any) => {
       message: error?.message,
       stack: error?.stack,
       chatId,
-      userName,
+      userName: msg.from?.first_name || "Unknown",
     });
 
     const fallbackResponse = getFallbackResponse();
@@ -116,6 +128,9 @@ telegramService.onMessage(async (msg: Message) => {
   const chatId = msg.chat.id;
   const messageText = msg.text;
   const userName = msg.from?.first_name || "user";
+
+  // Сохраняем сообщение в базу данных
+  await messageStorageService.saveIncomingMessage(msg, false);
 
   mainLogger.info("Regular message received", {
     userName,
@@ -161,29 +176,42 @@ telegramService.onMessage(async (msg: Message) => {
 // Команды управления
 telegramService.onCommand(/\/start/, (msg: Message) => {
   const helpMessage = `
-Telegram Assistant (ADK version)
+🤖 **Telegram Assistant (ADK + History)**
 
-Connected to Google Agent Development Kit:
-- Creates personal session for each user
-- Forwards all messages to ADK
-- Returns responses with typing simulation
-- Saves sessions between restarts
+🔗 **Подключения:**
+- Google Agent Development Kit
+- Telegram Business API
+- Анализ истории переписки
 
-Status: ${assistantEnabled ? "Active" : "Inactive"}
-Active sessions: ${userSessions.size}
+📊 **Статус:** ${assistantEnabled ? "🟢 Активен" : "🔴 Неактивен"}
+👥 **Активных сессий:** ${userSessions.size}
 
-Commands:
-/on - enable assistant
-/off - disable assistant  
-/status - show status and statistics
-/sessions - show session information
-/clear - delete all sessions
-/save - force save sessions
+⚙️ **Основные команды:**
+/on - включить ассистента
+/off - выключить ассистента  
+/status - показать статус и статистику
+/sessions - информация о сессии
 
-Environment settings:
-- TELEGRAM_BOT_TOKEN
-- ADK_BASE_URL (${adkBaseUrl})
-- ADK_APP_NAME (${appName})
+📚 **Работа с историей:**
+/print_history - вывести историю чата в консоль (простой)
+/history - базовый анализ истории переписки
+/advanced_history - продвинутый анализ с захватом в реальном времени
+/export_leads - экспорт найденных лидов
+/export_advanced_leads - детальный экспорт с оценкой качества лидов
+
+🛠 **Управление данными:**
+/clear - очистить все сессии
+/save - принудительно сохранить сессии
+
+🔧 **Настройки окружения:**
+- ADK URL: ${adkBaseUrl}
+- App Name: ${appName}
+
+💡 **Возможности анализа истории:**
+- Автоматический поиск контактов (email, телефоны)
+- Выявление потенциальных лидов
+- Статистика по типам сообщений
+- Экспорт данных в CSV формат
     `;
 
   telegramService.sendMessage(msg.chat.id, helpMessage);
@@ -259,6 +287,82 @@ telegramService.onCommand(/\/clear/, (msg: Message) => {
   telegramService.sendMessage(msg.chat.id, `Cleared ${clearedCount} sessions`);
 });
 
+// Удалены команды работы с историей - заменены на сохранение в БД
+
+// Обработчик завершения работы
+process.on('SIGINT', () => {
+  mainLogger.info("Telegram assistant shutting down...");
+  mainLogger.info("Saving sessions...");
+  saveUserSessions();
+  telegramService.stopPolling();
+  mainLogger.info("All data saved. Goodbye!");
+  process.exit(0);
+});
+
+// Обработчик ошибок
+process.on('uncaughtException', (error) => {
+  mainLogger.error("Uncaught Exception", { 
+    message: error.message, 
+    stack: error.stack 
+  });
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  mainLogger.error("Unhandled Rejection", { 
+    reason: reason, 
+    promise: promise 
+  });
+});
+
+// Запуск проверки подключения к ADK
+(async () => {
+  try {
+    await checkAdkConnection();
+    mainLogger.info("✅ ADK connection successful");
+  } catch (error) {
+    mainLogger.warn("⚠️ ADK connection failed - using fallback responses");
+  }
+  
+  // Загружаем сессии пользователей
+  loadUserSessions();
+  mainLogger.info(`📱 Telegram assistant is ready! Loaded ${userSessions.size} user sessions`);
+})();
+
+// Периодическое сохранение сессий
+setInterval(
+  () => {
+    saveUserSessions();
+  },
+  5 * 60 * 1000,
+); // Каждые 5 минут
+
+// Периодическая очистка старых сессий
+setInterval(
+  () => {
+    const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000; // 3 дня
+    let removedCount = 0;
+
+    for (const [chatId, session] of userSessions.entries()) {
+      if (session.lastMessageTime < threeDaysAgo) {
+        userSessions.delete(chatId);
+        removedCount++;
+      }
+    }
+
+    if (removedCount > 0) {
+      mainLogger.info("Session cleanup completed", {
+        removedCount,
+        activeCount: userSessions.size,
+      });
+      saveUserSessions();
+    }
+  },
+  60 * 60 * 1000,
+); // Каждый час
+
+// Удалены команды экспорта - заменены на сохранение в БД
+
 // Периодическое сохранение сессий
 setInterval(
   () => {
@@ -300,6 +404,6 @@ process.on("SIGINT", () => {
   mainLogger.info("Saving sessions...");
   saveUserSessions();
   telegramService.stopPolling();
-  mainLogger.info("Sessions saved. Goodbye!");
+  mainLogger.info("All data saved. Goodbye!");
   process.exit(0);
 });
