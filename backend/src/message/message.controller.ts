@@ -27,7 +27,11 @@ import { RolesGuard } from '../roles/roles.guard';
 import { MessageService } from './message.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
-import { Message, MessageType, MessageDirection } from './entities/message.entity';
+import {
+  Message,
+  MessageType,
+  MessageDirection,
+} from './entities/message.entity';
 
 @ApiBearerAuth()
 @Roles(RoleEnum.admin, RoleEnum.service, RoleEnum.user)
@@ -42,12 +46,15 @@ export class MessageController {
 
   @Post()
   @ApiOperation({ summary: 'Создать новое сообщение' })
-  @ApiResponse({ status: 201, description: 'Сообщение успешно создано', type: Message })
+  @ApiResponse({
+    status: 201,
+    description: 'Сообщение успешно создано',
+    type: Message,
+  })
   @ApiResponse({ status: 400, description: 'Некорректные данные' })
   async create(@Body() createMessageDto: CreateMessageDto): Promise<Message> {
     return this.messageService.create(createMessageDto);
   }
-
 
   @Get()
   @ApiOperation({ summary: 'Получить все сообщения' })
@@ -98,7 +105,11 @@ export class MessageController {
     required: false,
     description: 'Порядок сортировки: ASC или DESC (по умолчанию ASC)',
   })
-  @ApiResponse({ status: 200, description: 'Список сообщений', type: [Message] })
+  @ApiResponse({
+    status: 200,
+    description: 'Список сообщений',
+    type: [Message],
+  })
   async findAll(
     @Query('chatId') chatId?: string,
     @Query('type') type?: MessageType,
@@ -111,7 +122,7 @@ export class MessageController {
     @Query('sortOrder') sortOrder?: 'ASC' | 'DESC',
   ): Promise<Message[]> {
     const options: any = {};
-    
+
     if (chatId) options.chatId = chatId;
     if (type) options.type = type;
     if (direction) options.direction = direction;
@@ -194,7 +205,11 @@ export class MessageController {
   @Patch(':id')
   @ApiOperation({ summary: 'Обновить сообщение' })
   @ApiParam({ name: 'id', description: 'ID сообщения' })
-  @ApiResponse({ status: 200, description: 'Сообщение обновлено', type: Message })
+  @ApiResponse({
+    status: 200,
+    description: 'Сообщение обновлено',
+    type: Message,
+  })
   @ApiResponse({ status: 404, description: 'Сообщение не найдено' })
   async update(
     @Param('id', ParseIntPipe) id: number,

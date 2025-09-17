@@ -1,15 +1,5 @@
-import {
-  Controller,
-  Post,
-  Body,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-} from '@nestjs/swagger';
+import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { MessageService } from './message.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { Message } from './entities/message.entity';
@@ -24,8 +14,14 @@ export class TelegramMessageController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Создать сообщение от Telegram бота (без авторизации)' })
-  @ApiResponse({ status: 201, description: 'Сообщение успешно создано', type: Message })
+  @ApiOperation({
+    summary: 'Создать сообщение от Telegram бота (без авторизации)',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Сообщение успешно создано',
+    type: Message,
+  })
   @ApiResponse({ status: 400, description: 'Некорректные данные' })
   async create(@Body() createMessageDto: CreateMessageDto): Promise<Message> {
     return this.messageService.create(createMessageDto);

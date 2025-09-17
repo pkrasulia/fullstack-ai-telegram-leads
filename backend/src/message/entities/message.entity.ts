@@ -44,7 +44,12 @@ export class Message {
   @Column({ type: 'bigint', name: 'from_user_id', nullable: true })
   fromUserId?: string;
 
-  @Column({ type: 'varchar', length: 255, name: 'from_username', nullable: true })
+  @Column({
+    type: 'varchar',
+    length: 255,
+    name: 'from_username',
+    nullable: true,
+  })
   fromUsername?: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
@@ -108,7 +113,12 @@ export class Message {
   @Column({ type: 'boolean', default: false, name: 'is_business' })
   isBusiness: boolean;
 
-  @Column({ type: 'varchar', length: 255, nullable: true, name: 'business_connection_id' })
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    name: 'business_connection_id',
+  })
   businessConnectionId?: string;
 
   @Column({ type: 'json', nullable: true, name: 'raw_data' })

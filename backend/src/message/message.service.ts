@@ -3,7 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions, Between } from 'typeorm';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
-import { Message, MessageType, MessageDirection } from './entities/message.entity';
+import {
+  Message,
+  MessageType,
+  MessageDirection,
+} from './entities/message.entity';
 
 @Injectable()
 export class MessageService {
@@ -30,7 +34,7 @@ export class MessageService {
       ...createMessageDto,
       messageDate: new Date(createMessageDto.messageDate),
     });
-    
+
     return await this.messageRepository.save(message);
   }
 
@@ -47,7 +51,7 @@ export class MessageService {
   }): Promise<Message[]> {
     const sortBy = options?.sortBy || 'messageDate';
     const sortOrder = options?.sortOrder || 'DESC';
-    
+
     const findOptions: FindManyOptions<Message> = {
       order: { [sortBy]: sortOrder },
     };
@@ -112,14 +116,17 @@ export class MessageService {
     });
   }
 
-  async update(id: number, updateMessageDto: UpdateMessageDto): Promise<Message> {
+  async update(
+    id: number,
+    updateMessageDto: UpdateMessageDto,
+  ): Promise<Message> {
     const message = await this.findOne(id);
     Object.assign(message, updateMessageDto);
-    
+
     if (updateMessageDto.messageDate) {
       message.messageDate = new Date(updateMessageDto.messageDate);
     }
-    
+
     return await this.messageRepository.save(message);
   }
 
@@ -165,21 +172,27 @@ export class MessageService {
       .getRawOne();
 
     // Формируем результат
-    const messagesByType = Object.values(MessageType).reduce((acc, type) => {
-      acc[type] = 0;
-      return acc;
-    }, {} as Record<MessageType, number>);
+    const messagesByType = Object.values(MessageType).reduce(
+      (acc, type) => {
+        acc[type] = 0;
+        return acc;
+      },
+      {} as Record<MessageType, number>,
+    );
 
-    typeStats.forEach(stat => {
+    typeStats.forEach((stat) => {
       messagesByType[stat.type] = parseInt(stat.count);
     });
 
-    const messagesByDirection = Object.values(MessageDirection).reduce((acc, direction) => {
-      acc[direction] = 0;
-      return acc;
-    }, {} as Record<MessageDirection, number>);
+    const messagesByDirection = Object.values(MessageDirection).reduce(
+      (acc, direction) => {
+        acc[direction] = 0;
+        return acc;
+      },
+      {} as Record<MessageDirection, number>,
+    );
 
-    directionStats.forEach(stat => {
+    directionStats.forEach((stat) => {
       messagesByDirection[stat.direction] = parseInt(stat.count);
     });
 
@@ -187,19 +200,24 @@ export class MessageService {
       totalMessages,
       messagesByType,
       messagesByDirection,
-      dateRange: dateRange.from && dateRange.to ? {
-        from: dateRange.from,
-        to: dateRange.to,
-      } : null,
+      dateRange:
+        dateRange.from && dateRange.to
+          ? {
+              from: dateRange.from,
+              to: dateRange.to,
+            }
+          : null,
     };
   }
 
-  async getChatList(): Promise<Array<{
-    chatId: string;
-    messageCount: number;
-    lastMessageDate: Date;
-    lastMessageText?: string;
-  }>> {
+  async getChatList(): Promise<
+    Array<{
+      chatId: string;
+      messageCount: number;
+      lastMessageDate: Date;
+      lastMessageText?: string;
+    }>
+  > {
     const chats = await this.messageRepository
       .createQueryBuilder('message')
       .select('message.chatId', 'chatId')
@@ -216,7 +234,7 @@ export class MessageService {
       lastMessageDate: Date;
       lastMessageText?: string;
     }> = [];
-    
+
     for (const chat of chats) {
       const lastMessage = await this.messageRepository.findOne({
         where: { chatId: chat.chatId },
