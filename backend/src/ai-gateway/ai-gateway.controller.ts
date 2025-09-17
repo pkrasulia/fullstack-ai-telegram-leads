@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { AiGatewayService } from './ai-gateway.service';
 import { CreateAiGatewayDto } from './dto/create-ai-gateway.dto';
 import { UpdateAiGatewayDto } from './dto/update-ai-gateway.dto';
@@ -7,6 +16,8 @@ import { Roles } from 'src/roles/roles.decorator';
 import { RoleEnum } from '../roles/roles.enum';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/roles/roles.guard';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AiGatewayEntity } from './entities/ai-gateway.entity';
 
 @ApiBearerAuth()
 @Roles(RoleEnum.admin, RoleEnum.service)
@@ -16,13 +27,23 @@ import { RolesGuard } from 'src/roles/roles.guard';
   path: 'ai-gateway',
   version: '1',
 })
-
 export class AiGatewayController {
   constructor(private readonly aiGatewayService: AiGatewayService) {}
 
+  /* 
+  @ApiOperation({ summary: 'Создать новый AI запрос' })
+  @ApiResponse({ status: 201, description: 'AI запрос успешно создан', type: AiGateway })
+  @ApiResponse({ status: 400, description: 'Некорректные данные' })
+  */
   @Post()
+  @ApiOperation({ summary: 'Создать новый AI запрос' })
+  @ApiResponse({
+    status: 201,
+    description: 'AI запрос успешно создан',
+    type: AiGatewayEntity,
+  })
+  @ApiResponse({ status: 400, description: 'Некорректные данные' })
   create(@Body() createAiGatewayDto: CreateAiGatewayDto) {
-    console.log('ai-gateway create route')
     return this.aiGatewayService.create(createAiGatewayDto);
   }
 
@@ -37,7 +58,10 @@ export class AiGatewayController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAiGatewayDto: UpdateAiGatewayDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateAiGatewayDto: UpdateAiGatewayDto,
+  ) {
     return this.aiGatewayService.update(+id, updateAiGatewayDto);
   }
 
