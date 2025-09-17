@@ -29,6 +29,7 @@ import { MongooseConfigService } from './database/mongoose-config.service';
 import { DatabaseConfig } from './database/config/database-config.type';
 import { LeadModule } from './lead/lead.module';
 import { MessageModule } from './message/message.module';
+import { AiGatewayModule } from './ai-gateway/ai-gateway.module';
 
 // <database-block>
 const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig)
@@ -96,6 +97,7 @@ const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig)
     HomeModule,
     LeadModule,
     MessageModule,
+    AiGatewayModule,
   ],
 })
 export class AppModule {}
