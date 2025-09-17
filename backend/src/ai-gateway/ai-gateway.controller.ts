@@ -1,14 +1,28 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { AiGatewayService } from './ai-gateway.service';
 import { CreateAiGatewayDto } from './dto/create-ai-gateway.dto';
 import { UpdateAiGatewayDto } from './dto/update-ai-gateway.dto';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Roles } from 'src/roles/roles.decorator';
+import { RoleEnum } from '../roles/roles.enum';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from 'src/roles/roles.guard';
 
-@Controller('ai-gateway')
+@ApiBearerAuth()
+@Roles(RoleEnum.admin, RoleEnum.service)
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+@ApiTags('AiGateway')
+@Controller({
+  path: 'ai-gateway',
+  version: '1',
+})
+
 export class AiGatewayController {
   constructor(private readonly aiGatewayService: AiGatewayService) {}
 
   @Post()
   create(@Body() createAiGatewayDto: CreateAiGatewayDto) {
+    console.log('ai-gateway create route')
     return this.aiGatewayService.create(createAiGatewayDto);
   }
 
