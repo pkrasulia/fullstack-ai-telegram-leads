@@ -35,20 +35,29 @@ class Config(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "../.env"
+            os.path.dirname(os.path.abspath(__file__)), "../../.env.agent"
         ),
-        env_prefix="GOOGLE_",
+        env_prefix="",
         case_sensitive=True,
         extra="ignore",
     )
 
     agent_settings: AgentModel = Field(default=AgentModel())
     app_name: str = "telegram_customer_service_app"
-    CLOUD_PROJECT: str = Field(default="my_project")
-    CLOUD_LOCATION: str = Field(default="us-central1")
-    GENAI_USE_VERTEXAI: str = Field(default="1")
-    API_KEY: str | None = Field(default="")
+    
+    # Google Cloud и AI настройки
+    GOOGLE_CLOUD_PROJECT: str = Field(default="my_project")
+    GOOGLE_CLOUD_LOCATION: str = Field(default="us-central1")
+    GOOGLE_GENAI_USE_VERTEXAI: str = Field(default="0")
+    GOOGLE_API_KEY: str | None = Field(default="")
 
-    # Добавляем переменные из .env, которые сейчас мешают
-    TELEGRAM_BOT_TOKEN: str | None = None
-    NODE_ENV: str | None = None
+    # Environment
+    NODE_ENV: str = Field(default="development")
+    
+    # Настройки для истории сообщений
+    MESSAGE_HISTORY_LIMIT: int = Field(default=20)
+    BACKEND_URL: str = Field(default="http://backend:4343")
+    
+    # Service Account для аутентификации с backend
+    SERVICE_ACCOUNT_LOGIN: str = Field(default="service@example.com")
+    SERVICE_ACCOUNT_PASSWORD: str = Field(default="secret")
