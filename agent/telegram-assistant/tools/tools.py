@@ -18,7 +18,7 @@ import logging
 import re
 import time
 import requests
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from google.adk.tools import ToolContext
 from ..services.auth_service import get_auth_service
 
@@ -403,79 +403,3 @@ def find_lead_by_telegram_id(telegram_id: str) -> dict:
             "message": f"Failed to find lead: {str(e)}"
         }
 
-
-def get_chat_message_history(chat_id: str, limit: int = None) -> dict:
-    """
-    Get recent message history for a specific chat.
-    
-    Args:
-        chat_id (str): The Telegram chat ID to get messages for
-        limit (int, optional): Number of messages to retrieve (defaults to config setting)
-        
-    Returns:
-        dict: A dictionary with status, message, and messages data
-    """
-    try:
-        from ..config import Config
-        config = Config()
-        
-        if limit is None:
-            limit = config.MESSAGE_HISTORY_LIMIT
-            
-        logger.info(">>> Getting message history for chat %s (limit: %d)", chat_id, limit)
-        
-        auth_service = get_auth_service()
-        response = auth_service.make_authenticated_request(
-            method='GET',
-            endpoint=f'/messages?chatId={chat_id}&limit={limit}&sortBy=messageDate&sortOrder=DESC'
-        )
-        
-        if response.status_code == 200:
-            messages_data = response.json()
-            logger.info("Retrieved %d messages for chat %s", len(messages_data), chat_id)
-            
-            # Format messages for context
-            formatted_messages = []
-            for msg in reversed(messages_data):  # Reverse to show chronological order
-                direction = "👤 User" if msg.get('direction') == 'incoming' else "🤖 Bot"
-                timestamp = msg.get('messageDate', '')[:19].replace('T', ' ')  # Format datetime
-                text = msg.get('text', '')
-                
-                if text:  # Only include messages with text
-                    formatted_messages.append(f"[{timestamp}] {direction}: {text}")
-            
-            return {
-                "status": "success",
-                "message": f"Retrieved {len(formatted_messages)} messages with text content.",
-                "messages": formatted_messages,
-                "raw_data": messages_data
-            }
-        elif response.status_code == 404:
-            logger.info("No messages found for chat %s", chat_id)
-            return {
-                "status": "not_found",
-                "message": f"No messages found for chat {chat_id}.",
-                "messages": []
-            }
-        else:
-            error_msg = f"HTTP {response.status_code}"
-            try:
-                error_details = response.json()
-                error_msg += f": {error_details}"
-            except:
-                error_msg += f": {response.text}"
-            
-            logger.error("Backend API error: %s", error_msg)
-            return {
-                "status": "error",
-                "message": f"Backend API error: {error_msg}",
-                "messages": []
-            }
-            
-    except Exception as e:
-        logger.error("Failed to get message history: %s", str(e))
-        return {
-            "status": "error",
-            "message": f"Failed to get message history: {str(e)}",
-            "messages": []
-        }

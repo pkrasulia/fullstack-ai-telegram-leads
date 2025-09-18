@@ -186,26 +186,5 @@ def before_agent(callback_context: InvocationContext):
         }
         callback_context.state["customer_profile"] = json.dumps(default_customer)
 
-    # Load recent message history if chat_id is available
-    chat_id = getattr(callback_context, 'chat_id', None)
-    if chat_id and "message_history_loaded" not in callback_context.state:
-        try:
-            from ..services.message_history_service import get_message_history_service
-            
-            history_service = get_message_history_service()
-            history_result = history_service.get_recent_messages(str(chat_id))
-            
-            if history_result.get("status") == "success" and history_result.get("context"):
-                # Add formatted message history to the context
-                callback_context.state["recent_messages"] = history_result["context"]
-                callback_context.state["message_history_loaded"] = True
-                
-                logger.info("Loaded %d recent messages for chat %s", 
-                          history_result.get("message_count", 0), chat_id)
-            else:
-                logger.info("No message history found for chat %s", chat_id)
-                
-        except Exception as e:
-            logger.error("Failed to load message history: %s", str(e))
 
     # logger.info(callback_context.state["customer_profile"])
