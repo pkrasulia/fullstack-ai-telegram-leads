@@ -18,7 +18,7 @@ import logging
 from google.adk import Agent
 from .config import Config
 from .prompts import GLOBAL_INSTRUCTION, INSTRUCTION
-from .tools.tools import send_lead_to_backend, get_chat_message_history
+from .tools.tools import send_lead_to_backend
 from .shared_libraries.callbacks import (
     rate_limit_callback,
     before_agent,
@@ -37,7 +37,6 @@ root_agent = Agent(
     name=configs.agent_settings.name,
     tools=[
         send_lead_to_backend,
-        get_chat_message_history,
     ],
     before_tool_callback=before_tool,
     after_tool_callback=after_tool,
