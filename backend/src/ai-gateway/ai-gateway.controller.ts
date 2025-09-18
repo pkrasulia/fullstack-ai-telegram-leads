@@ -21,6 +21,9 @@ import { RolesGuard } from 'src/roles/roles.guard';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AiGatewayEntity } from './entities/ai-gateway.entity';
 
+@ApiBearerAuth()
+@Roles(RoleEnum.admin, RoleEnum.service)
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 @ApiTags('AiGateway')
 @Controller({
   path: 'ai-gateway',
