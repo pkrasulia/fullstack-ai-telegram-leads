@@ -62,27 +62,4 @@ export class AiGatewayController {
     
     return result;
   }
-
-  @Get()
-  findAll() {
-    return this.aiGatewayService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.aiGatewayService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateAiGatewayDto: UpdateAiGatewayDto,
-  ) {
-    return this.aiGatewayService.update(+id, updateAiGatewayDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.aiGatewayService.remove(+id);
-  }
 }

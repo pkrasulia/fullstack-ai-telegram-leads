@@ -92,22 +92,6 @@ export class AiGatewayService {
     }
   }
 
-  findAll() {
-    return `This action returns all aiGateway`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} aiGateway`;
-  }
-
-  update(id: number, updateAiGatewayDto: UpdateAiGatewayDto) {
-    return `This action updates a #${id} aiGateway`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} aiGateway`;
-  }
-
   /**
    * Отправляет сообщение в ADK
    * @param message - текст сообщения
