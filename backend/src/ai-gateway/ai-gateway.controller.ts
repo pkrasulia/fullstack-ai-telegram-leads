@@ -48,7 +48,7 @@ export class AiGatewayController {
   @ApiResponse({ status: 500, description: 'Внутренняя ошибка сервера' })
   async create(@Body() createAiGatewayDto: CreateAiGatewayDto) {
     const result = await this.aiGatewayService.create(createAiGatewayDto);
-    
+
     if (!result.success) {
       throw new HttpException(
         {
@@ -59,7 +59,7 @@ export class AiGatewayController {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-    
+
     return result;
   }
 }
