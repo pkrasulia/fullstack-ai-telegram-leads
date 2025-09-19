@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import { Message } from "node-telegram-bot-api";
-import { checkAdkConnection, getOrCreateUserSession, loadUserSessions, saveUserSessions, sendMessageToAdk } from "services/adk-service";
+import { getOrCreateUserSession, loadUserSessions, saveUserSessions, sendMessageToAdk } from "services/adk-service";
 import { TelegramService } from "./services/telegram-service";
 import { MessageStorageService, MessageDirection } from "./services/message-storage-service";
 import { mainLogger } from "./app/logs/logger";
@@ -8,14 +8,12 @@ import { mainLogger } from "./app/logs/logger";
 dotenv.config({ path: "../../.env" });
 
 const token: string = process.env.TELEGRAM_BOT_TOKEN || "7859566653:AAG8JfRotqlK5FldOYMZm9X6MQG48r_2GGw";
-const adkBaseUrl: string = process.env.ADK_BASE_URL || "http://agent:8000";
-const appName: string = process.env.ADK_APP_NAME || "telegram-assistant";
+const backendBaseUrl: string = process.env.BACKEND_BASE_URL || "http://backend:4343/api/v1";
 
-mainLogger.info("Telegram assistant started with ADK integration");
+mainLogger.info("Telegram assistant started with Backend AI Gateway integration");
 mainLogger.info("Configuration check:");
 mainLogger.info(`- Telegram Bot Token: ${token.length > 10 ? "Configured" : "Missing"}`);
-mainLogger.info(`- ADK Base URL: ${adkBaseUrl}`);
-mainLogger.info(`- App Name: ${appName}`);
+mainLogger.info(`- Backend Base URL: ${backendBaseUrl}`);
 
 // Проверяем валидность токена
 if (!token || token === "YOUR_BOT_TOKEN_HERE") {
@@ -77,7 +75,7 @@ telegramService.onBusinessMessage(async (msg: any) => {
   // Проверяем, является ли сообщение командой
   if (messageText.startsWith('/')) {
     mainLogger.info("Business message is a command, processing separately", { command: messageText });
-    return; // Команды не отправляем в ADK
+    return; // Команды не отправляем в генерацию
   }
 
   try {
@@ -90,7 +88,7 @@ telegramService.onBusinessMessage(async (msg: any) => {
       return;
     }
 
-    // Отправляем сообщение в ADK
+    // Отправляем сообщение в Backend AI Gateway
     const adkResponse = await sendMessageToAdk(session, messageText);
 
     let responseText: string;
@@ -176,10 +174,10 @@ telegramService.onMessage(async (msg: Message) => {
 // Команды управления
 telegramService.onCommand(/\/start/, (msg: Message) => {
   const helpMessage = `
-🤖 **Telegram Assistant (ADK + History)**
+🤖 **Telegram Assistant (Backend AI Gateway + History)**
 
 🔗 **Подключения:**
-- Google Agent Development Kit
+- Backend AI Gateway
 - Telegram Business API
 - Анализ истории переписки
 
@@ -192,20 +190,12 @@ telegramService.onCommand(/\/start/, (msg: Message) => {
 /status - показать статус и статистику
 /sessions - информация о сессии
 
-📚 **Работа с историей:**
-/print_history - вывести историю чата в консоль (простой)
-/history - базовый анализ истории переписки
-/advanced_history - продвинутый анализ с захватом в реальном времени
-/export_leads - экспорт найденных лидов
-/export_advanced_leads - детальный экспорт с оценкой качества лидов
-
 🛠 **Управление данными:**
 /clear - очистить все сессии
 /save - принудительно сохранить сессии
 
 🔧 **Настройки окружения:**
-- ADK URL: ${adkBaseUrl}
-- App Name: ${appName}
+- Backend URL: ${backendBaseUrl}
 
 💡 **Возможности анализа истории:**
 - Автоматический поиск контактов (email, телефоны)
@@ -235,8 +225,7 @@ Session ID: ${userSession.sessionId}
 Messages: ${userSession.totalMessages}
 Last activity: ${new Date(userSession.lastMessageTime).toLocaleString("en-US")}
 
-ADK App: ${appName}
-ADK URL: ${adkBaseUrl}
+Backend URL: ${backendBaseUrl}
   `;
 
   telegramService.sendMessage(chatId, sessionInfo);
@@ -249,7 +238,7 @@ telegramService.onCommand(/\/save/, (msg: Message) => {
 
 telegramService.onCommand(/\/on/, (msg: Message) => {
   assistantEnabled = true;
-  telegramService.sendMessage(msg.chat.id, "AI assistant ENABLED. Ready to work with ADK.");
+  telegramService.sendMessage(msg.chat.id, "AI assistant ENABLED. Ready to use Backend AI Gateway.");
 });
 
 telegramService.onCommand(/\/off/, (msg: Message) => {
@@ -265,13 +254,12 @@ telegramService.onCommand(/\/status/, (msg: Message) => {
   telegramService.sendMessage(
     msg.chat.id,
     `
-Telegram Assistant Status (ADK):
+Telegram Assistant Status (Backend AI Gateway):
 
 State: ${status}
 Active sessions: ${activeSessions}
 Total messages: ${totalMessages}
-ADK URL: ${adkBaseUrl}
-App Name: ${appName}
+Backend URL: ${backendBaseUrl}
 Sessions file: ${SESSIONS_FILE}
 Started: ${new Date().toLocaleString("en-US")}
 
@@ -315,16 +303,8 @@ process.on('unhandledRejection', (reason, promise) => {
   });
 });
 
-// Запуск проверки подключения к ADK
+// Инициализация приложения
 (async () => {
-  try {
-    await checkAdkConnection();
-    mainLogger.info("✅ ADK connection successful");
-  } catch (error) {
-    mainLogger.warn("⚠️ ADK connection failed - using fallback responses");
-  }
-  
-  // Загружаем сессии пользователей
   loadUserSessions();
   mainLogger.info(`📱 Telegram assistant is ready! Loaded ${userSessions.size} user sessions`);
 })();
@@ -396,7 +376,6 @@ setInterval(
 ); // Каждый час
 
 loadUserSessions();
-checkAdkConnection();
 
 // Graceful shutdown с сохранением сессий
 process.on("SIGINT", () => {

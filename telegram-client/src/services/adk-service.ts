@@ -4,17 +4,48 @@ import fs from "fs";
 import { adkLogger } from "../app/logs/logger";
 
 dotenv.config({ path: "../../.env" });
+import crypto from "crypto";
 
-export const adkBaseUrl: string = process.env.ADK_BASE_URL || "http://agent:8000";
-export const appName: string = process.env.ADK_APP_NAME || "telegram-assistant";
+export const backendBaseUrl: string = process.env.BACKEND_BASE_URL || "http://backend:4343/api/v1";
+const serviceEmail: string = process.env.SERVICE_ACCOUNT_LOGIN || "service@example.com";
+const servicePassword: string = process.env.SERVICE_ACCOUNT_PASSWORD || "secret";
 
-export const adkClient: AxiosInstance = axios.create({
-  baseURL: adkBaseUrl,
-  timeout: 30000,
+export const backendClient: AxiosInstance = axios.create({
+  baseURL: backendBaseUrl,
+  timeout: 20000,
   headers: {
     "Content-Type": "application/json",
   },
 });
+
+let jwtToken: string | null = null;
+let tokenExpiresAt: number | null = null;
+
+async function loginServiceAccount(): Promise<void> {
+  try {
+    adkLogger.info("Logging in service account to backend", { serviceEmail });
+    const response = await backendClient.post("/auth/email/login", {
+      email: serviceEmail,
+      password: servicePassword,
+    });
+    const token = response?.data?.token as string | undefined;
+    if (!token) throw new Error("Login response missing token");
+    jwtToken = token;
+    const now = Math.floor(Date.now() / 1000);
+    tokenExpiresAt = now + 55 * 60;
+  } catch (error: any) {
+    adkLogger.error("Service account login failed", { message: error?.message, status: error?.response?.status });
+    throw error;
+  }
+}
+
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const now = Math.floor(Date.now() / 1000);
+  if (!jwtToken || !tokenExpiresAt || now >= tokenExpiresAt) {
+    await loginServiceAccount();
+  }
+  return { "Content-Type": "application/json", Authorization: `Bearer ${jwtToken}` };
+}
 
 export interface UserSession {
   userId: string;
@@ -55,23 +86,8 @@ export function saveUserSessions(): void {
   }
 }
 
-export async function createAdkSession(userId: string): Promise<string | null> {
-  try {
-    adkLogger.info("Creating new ADK session", { userId });
-
-    const response = await adkClient.post(`/apps/${appName}/users/${userId}/sessions`);
-    const sessionId = response.data.session_id || response.data.id;
-
-    adkLogger.info("ADK session created", { userId, sessionId });
-    return sessionId;
-  } catch (error: any) {
-    adkLogger.error("Error creating ADK session", {
-      userId,
-      message: error?.message,
-      responseData: error?.response?.data,
-    });
-    return null;
-  }
+function generateSessionId(): string {
+  return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
 export async function getOrCreateUserSession(chatId: number, userName: string): Promise<UserSession | null> {
@@ -83,12 +99,7 @@ export async function getOrCreateUserSession(chatId: number, userName: string): 
   }
 
   const userId = `tg_user_${chatId}`;
-  const sessionId = await createAdkSession(userId);
-
-  if (!sessionId) {
-    adkLogger.error("Failed to create session for user", { chatId, userId });
-    return null;
-  }
+  const sessionId = generateSessionId();
 
   const newSession: UserSession = {
     userId,
@@ -107,73 +118,50 @@ export async function getOrCreateUserSession(chatId: number, userName: string): 
 
 export async function sendMessageToAdk(session: UserSession, message: string): Promise<string | null> {
   try {
-    adkLogger.info("Sending message to ADK", {
+    adkLogger.info("Sending message to Backend AI Gateway", {
       userId: session.userId,
       sessionId: session.sessionId,
       messagePreview: message.substring(0, 50) + (message.length > 50 ? "..." : ""),
     });
 
     const payload = {
-      appName: appName,
+      text: message,
       userId: session.userId,
       sessionId: session.sessionId,
-      newMessage: {
-        role: "user",
-        parts: [
-          {
-            text: message,
-          },
-        ],
-      },
-      streaming: false,
     };
 
-    adkLogger.debug("ADK payload", { payload });
-
-    let response;
-
-    try {
-      response = await adkClient.post("/run", payload);
-      adkLogger.debug("Request payload sent", { payload });
-    } catch (error: any) {
-      if (error?.response?.status === 404 && error?.response?.data?.detail?.includes("Session not found")) {
-        adkLogger.warn("Session not found, creating new one", { userId: session.userId });
-        const newSessionRes = await adkClient.post(`/apps/${appName}/users/${session.userId}/sessions`);
-        session.sessionId = newSessionRes.data.session_id || newSessionRes.data.id;
-        adkLogger.info("New session created", { sessionId: session.sessionId });
-        payload.sessionId = session.sessionId;
-        response = await adkClient.post("/run", payload);
-      } else {
-        throw error;
-      }
+    const headers = await getAuthHeaders();
+    const response = await backendClient.post("/ai-gateway", payload, { headers });
+    const data = response?.data;
+    const aiResponse: string | undefined = data?.response;
+    if (typeof aiResponse === "string" && aiResponse.length > 0) {
+      adkLogger.info("Backend AI response processed", {
+        userId: session.userId,
+        responsePreview: aiResponse.substring(0, 50) + (aiResponse.length > 50 ? "..." : ""),
+      });
+      return aiResponse;
     }
-
-    const responseData = response.data;
-    adkLogger.debug("ADK response received", { responseData });
-
-    let aiResponse = "Sorry, no response received from system";
-
-    if (Array.isArray(responseData)) {
-      for (const item of responseData) {
-        if (item?.content?.parts) {
-          const textPart = item.content.parts.find((part: any) => part.text);
-          if (textPart?.text) {
-            aiResponse = textPart.text;
-            break;
-          }
-        }
-      }
-    } else if (typeof responseData === "string") {
-      aiResponse = responseData;
-    }
-
-    adkLogger.info("ADK response processed", {
-      userId: session.userId,
-      responsePreview: aiResponse.substring(0, 50) + (aiResponse.length > 50 ? "..." : ""),
-    });
-    return aiResponse;
+    adkLogger.warn("Backend AI response missing 'response' field", { data });
+    return null;
   } catch (error: any) {
-    adkLogger.error("Error sending message to ADK", {
+    if (error?.response?.status === 401) {
+      try {
+        jwtToken = null;
+        tokenExpiresAt = null;
+        const headers = await getAuthHeaders();
+        const retryResponse = await backendClient.post("/ai-gateway", {
+          text: message,
+          userId: session.userId,
+          sessionId: session.sessionId,
+        }, { headers });
+        const retryData = retryResponse?.data;
+        const retryText: string | undefined = retryData?.response;
+        if (typeof retryText === "string" && retryText.length > 0) return retryText;
+      } catch (e: any) {
+        adkLogger.error("Retry after re-auth failed", { message: e?.message, status: e?.response?.status });
+      }
+    }
+    adkLogger.error("Error sending message to Backend AI Gateway", {
       message: error?.message,
       status: error?.response?.status,
       responseData: error?.response?.data,
@@ -184,64 +172,4 @@ export async function sendMessageToAdk(session: UserSession, message: string): P
   }
 }
 
-export async function testAdkEndpoints(): Promise<void> {
-  try {
-    adkLogger.info("Testing ADK endpoints");
-
-    const appsResponse = await adkClient.get("/list-apps");
-    adkLogger.info("/list-apps endpoint working", { apps: appsResponse.data });
-
-    if (appsResponse.data.includes(appName)) {
-      try {
-        const appInfoResponse = await adkClient.get(`/apps/${appName}`);
-        adkLogger.info(`/apps/${appName} endpoint working`, { appInfo: appInfoResponse.data });
-      } catch (error: any) {
-        adkLogger.warn(`/apps/${appName} endpoint unavailable`, { status: error?.response?.status });
-      }
-    }
-
-    try {
-      const testUserId = "test_user_123";
-      const sessionResponse = await adkClient.post(`/apps/${appName}/users/${testUserId}/sessions`);
-      adkLogger.info("Session creation working", { sessionData: sessionResponse.data });
-
-      const testSessionId = sessionResponse.data.id || sessionResponse.data.sessionId;
-
-      if (testSessionId) {
-        const testPayload = {
-          appName: appName,
-          userId: testUserId,
-          sessionId: testSessionId,
-          newMessage: {
-            parts: [{ text: "Тестовое сообщение" }],
-            role: "user",
-          },
-          streaming: false,
-        };
-
-        const runResponse = await adkClient.post("/run", testPayload);
-        adkLogger.info("/run endpoint working", { runData: runResponse.data });
-      }
-    } catch (error: any) {
-      adkLogger.error("Error testing /run endpoint", {
-        message: error?.message,
-        responseData: error?.response?.data,
-      });
-    }
-  } catch (error: any) {
-    adkLogger.error("Error testing endpoints", { message: error?.message });
-  }
-}
-
-export async function checkAdkConnection(): Promise<void> {
-  try {
-    adkLogger.info("Checking ADK connection");
-    const response = await adkClient.get("/list-apps");
-    adkLogger.info("ADK connection working");
-    adkLogger.info("Available applications", { apps: response.data });
-
-    await testAdkEndpoints();
-  } catch (error: any) {
-    adkLogger.error("ADK connection error", { message: error?.message });
-  }
-}
+// ADK connectivity helpers removed: now using Backend AI Gateway
