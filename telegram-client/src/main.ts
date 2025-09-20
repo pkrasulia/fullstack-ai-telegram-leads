@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import { Message } from "node-telegram-bot-api";
-import { getOrCreateUserSession, loadUserSessions, saveUserSessions, sendMessageToAdk } from "services/adk-service";
+import { getOrCreateUserSession, loadUserSessions, saveUserSessions, sendMessageToGateway } from "./services/gateway-service";
 import { TelegramService } from "./services/telegram-service";
 import { MessageStorageService, MessageDirection } from "./services/message-storage-service";
 import { mainLogger } from "./app/logs/logger";
@@ -40,7 +40,7 @@ interface UserSession {
 // Хранение сессий пользователей
 const userSessions = new Map<number, UserSession>();
 
-// Fallback response when ADK is unavailable
+// Fallback response when backend is unavailable
 function getFallbackResponse(): string {
   const responses = ["Service temporarily unavailable. Please try again.", "Connection error. Retrying...", "Technical issues detected. Please retry your request."];
   return responses[Math.floor(Math.random() * responses.length)];
@@ -89,7 +89,7 @@ telegramService.onBusinessMessage(async (msg: any) => {
     }
 
     // Отправляем сообщение в Backend AI Gateway
-    const adkResponse = await sendMessageToAdk(session, messageText);
+    const adkResponse = await sendMessageToGateway(session, messageText);
 
     let responseText: string;
     if (adkResponse) {
@@ -144,8 +144,8 @@ telegramService.onMessage(async (msg: Message) => {
       return;
     }
 
-    // Отправляем сообщение в ADK
-    const adkResponse = await sendMessageToAdk(session, messageText);
+    // Отправляем сообщение в Backend AI Gateway
+    const adkResponse = await sendMessageToGateway(session, messageText);
 
     let responseText: string;
     if (adkResponse) {
@@ -310,70 +310,30 @@ process.on('unhandledRejection', (reason, promise) => {
 })();
 
 // Периодическое сохранение сессий
-setInterval(
-  () => {
-    saveUserSessions();
-  },
-  5 * 60 * 1000,
-); // Каждые 5 минут
+setInterval(() => {
+  saveUserSessions();
+}, 5 * 60 * 1000); // Каждые 5 минут
 
 // Периодическая очистка старых сессий
-setInterval(
-  () => {
-    const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000; // 3 дня
-    let removedCount = 0;
+setInterval(() => {
+  const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000; // 3 дня
+  let removedCount = 0;
 
-    for (const [chatId, session] of userSessions.entries()) {
-      if (session.lastMessageTime < threeDaysAgo) {
-        userSessions.delete(chatId);
-        removedCount++;
-      }
+  for (const [chatId, session] of userSessions.entries()) {
+    if (session.lastMessageTime < threeDaysAgo) {
+      userSessions.delete(chatId);
+      removedCount++;
     }
+  }
 
-    if (removedCount > 0) {
-      mainLogger.info("Session cleanup completed", {
-        removedCount,
-        activeCount: userSessions.size,
-      });
-      saveUserSessions();
-    }
-  },
-  60 * 60 * 1000,
-); // Каждый час
-
-// Удалены команды экспорта - заменены на сохранение в БД
-
-// Периодическое сохранение сессий
-setInterval(
-  () => {
+  if (removedCount > 0) {
+    mainLogger.info("Session cleanup completed", {
+      removedCount,
+      activeCount: userSessions.size,
+    });
     saveUserSessions();
-  },
-  5 * 60 * 1000,
-); // Каждые 5 минут
-
-// Периодическая очистка старых сессий
-setInterval(
-  () => {
-    const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000; // 3 дня
-    let removedCount = 0;
-
-    for (const [chatId, session] of userSessions.entries()) {
-      if (session.lastMessageTime < threeDaysAgo) {
-        userSessions.delete(chatId);
-        removedCount++;
-      }
-    }
-
-    if (removedCount > 0) {
-      mainLogger.info("Session cleanup completed", {
-        removedCount,
-        activeCount: userSessions.size,
-      });
-      saveUserSessions();
-    }
-  },
-  60 * 60 * 1000,
-); // Каждый час
+  }
+}, 60 * 60 * 1000); // Каждый час
 
 loadUserSessions();
 
