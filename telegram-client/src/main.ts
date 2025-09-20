@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import { Message } from "node-telegram-bot-api";
-import { getOrCreateUserSession, loadUserSessions, saveUserSessions, sendMessageToGateway } from "./services/gateway-service";
+import { getOrCreateUserSession, loadUserSessions, saveUserSessions, sendMessageToGateway, UserSession } from "./services/gateway-service";
 import { TelegramService } from "./services/telegram-service";
 import { MessageStorageService, MessageDirection } from "./services/message-storage-service";
 import { mainLogger } from "./app/logs/logger";
@@ -10,7 +10,7 @@ dotenv.config({ path: "../../.env" });
 const token: string = process.env.TELEGRAM_BOT_TOKEN || "7859566653:AAG8JfRotqlK5FldOYMZm9X6MQG48r_2GGw";
 const backendBaseUrl: string = process.env.BACKEND_BASE_URL || "http://backend:4343/api/v1";
 
-mainLogger.info("Telegram assistant started with Backend AI Gateway integration");
+mainLogger.info("Telegram assistant started with Backend Chat API integration");
 mainLogger.info("Configuration check:");
 mainLogger.info(`- Telegram Bot Token: ${token.length > 10 ? "Configured" : "Missing"}`);
 mainLogger.info(`- Backend Base URL: ${backendBaseUrl}`);
@@ -28,14 +28,7 @@ const messageStorageService = new MessageStorageService();
 let assistantEnabled = true;
 const SESSIONS_FILE = "user_sessions.json";
 
-// Интерфейс для хранения сессий пользователей
-interface UserSession {
-  userId: string;
-  sessionId: string;
-  userName: string;
-  lastMessageTime: number;
-  totalMessages: number;
-}
+// Интерфейс UserSession импортируется из gateway-service
 
 // Хранение сессий пользователей
 const userSessions = new Map<number, UserSession>();
@@ -88,7 +81,7 @@ telegramService.onBusinessMessage(async (msg: any) => {
       return;
     }
 
-    // Отправляем сообщение в Backend AI Gateway
+    // Отправляем сообщение в Backend Chat API
     const adkResponse = await sendMessageToGateway(session, messageText);
 
     let responseText: string;
@@ -144,7 +137,7 @@ telegramService.onMessage(async (msg: Message) => {
       return;
     }
 
-    // Отправляем сообщение в Backend AI Gateway
+    // Отправляем сообщение в Backend Chat API
     const adkResponse = await sendMessageToGateway(session, messageText);
 
     let responseText: string;
@@ -174,10 +167,10 @@ telegramService.onMessage(async (msg: Message) => {
 // Команды управления
 telegramService.onCommand(/\/start/, (msg: Message) => {
   const helpMessage = `
-🤖 **Telegram Assistant (Backend AI Gateway + History)**
+🤖 **Telegram Assistant (Backend Chat API + History)**
 
 🔗 **Подключения:**
-- Backend AI Gateway
+- Backend Chat API
 - Telegram Business API
 - Анализ истории переписки
 
@@ -193,6 +186,7 @@ telegramService.onCommand(/\/start/, (msg: Message) => {
 🛠 **Управление данными:**
 /clear - очистить все сессии
 /save - принудительно сохранить сессии
+/migrate - мигрировать сессию в новый Chat API
 
 🔧 **Настройки окружения:**
 - Backend URL: ${backendBaseUrl}
@@ -238,7 +232,7 @@ telegramService.onCommand(/\/save/, (msg: Message) => {
 
 telegramService.onCommand(/\/on/, (msg: Message) => {
   assistantEnabled = true;
-  telegramService.sendMessage(msg.chat.id, "AI assistant ENABLED. Ready to use Backend AI Gateway.");
+  telegramService.sendMessage(msg.chat.id, "AI assistant ENABLED. Ready to use Backend Chat API.");
 });
 
 telegramService.onCommand(/\/off/, (msg: Message) => {
@@ -254,7 +248,7 @@ telegramService.onCommand(/\/status/, (msg: Message) => {
   telegramService.sendMessage(
     msg.chat.id,
     `
-Telegram Assistant Status (Backend AI Gateway):
+Telegram Assistant Status (Backend Chat API):
 
 State: ${status}
 Active sessions: ${activeSessions}
@@ -273,6 +267,34 @@ telegramService.onCommand(/\/clear/, (msg: Message) => {
   userSessions.clear();
   saveUserSessions();
   telegramService.sendMessage(msg.chat.id, `Cleared ${clearedCount} sessions`);
+});
+
+telegramService.onCommand(/\/migrate/, async (msg: Message) => {
+  const chatId = msg.chat.id;
+  const userSession = userSessions.get(chatId);
+  
+  if (!userSession) {
+    telegramService.sendMessage(chatId, "No active session found. Send any message to create one.");
+    return;
+  }
+
+  if (userSession.chatSessionId) {
+    telegramService.sendMessage(chatId, "Session already migrated to new Chat API.");
+    return;
+  }
+
+  try {
+    // Принудительно создаем chatSessionId для текущей сессии
+    const session = await getOrCreateUserSession(chatId, userSession.userName);
+    if (session && session.chatSessionId) {
+      telegramService.sendMessage(chatId, `Session migrated successfully! Chat Session ID: ${session.chatSessionId}`);
+    } else {
+      telegramService.sendMessage(chatId, "Failed to migrate session. Please try again.");
+    }
+  } catch (error: any) {
+    mainLogger.error("Migration error", { error: error.message, chatId });
+    telegramService.sendMessage(chatId, "Migration failed. Please try again later.");
+  }
 });
 
 // Удалены команды работы с историей - заменены на сохранение в БД
