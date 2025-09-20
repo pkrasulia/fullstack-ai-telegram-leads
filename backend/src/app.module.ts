@@ -30,6 +30,7 @@ import { DatabaseConfig } from './database/config/database-config.type';
 import { LeadModule } from './lead/lead.module';
 import { MessageModule } from './message/message.module';
 import { AiGatewayModule } from './ai-gateway/ai-gateway.module';
+import { AiSessionModule } from './ai-session/ai-session.module';
 
 // <database-block>
 const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig)
@@ -98,6 +99,7 @@ const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig)
     LeadModule,
     MessageModule,
     AiGatewayModule,
+    AiSessionModule,
   ],
 })
 export class AppModule {}
