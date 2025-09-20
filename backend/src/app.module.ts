@@ -31,6 +31,9 @@ import { LeadModule } from './lead/lead.module';
 import { MessageModule } from './message/message.module';
 import { AiGatewayModule } from './ai-gateway/ai-gateway.module';
 import { AiSessionModule } from './ai-session/ai-session.module';
+import { TelegramMessageService } from './telegram-message/telegram-message.service';
+import { TelegramMessageModule } from './telegram-message/telegram-message.module';
+import { ChatModule } from './chat/chat.module';
 
 // <database-block>
 const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig)
@@ -100,6 +103,9 @@ const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig)
     MessageModule,
     AiGatewayModule,
     AiSessionModule,
+    TelegramMessageModule,
+    ChatModule,
   ],
+  providers: [TelegramMessageService],
 })
 export class AppModule {}
