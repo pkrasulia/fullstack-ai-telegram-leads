@@ -3,31 +3,36 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions, Between } from 'typeorm';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
+import { CreateUniversalMessageDto } from './dto/create-universal-message.dto';
 import {
   MessageEntity,
   MessageType,
   MessageDirection,
 } from './entities/message.entity';
+import { TelegramMessageEntity } from '../telegram-message/entities/telegram-message.entity';
 
 @Injectable()
 export class MessageService {
   constructor(
     @InjectRepository(MessageEntity)
     private readonly messageRepository: Repository<MessageEntity>,
+    @InjectRepository(TelegramMessageEntity)
+    private readonly telegramMessageRepository: Repository<TelegramMessageEntity>,
   ) {}
 
+  /** Создание универсального сообщения и, при необходимости, данных Telegram */
   async create(createMessageDto: CreateMessageDto): Promise<MessageEntity> {
-    // Проверяем, не существует ли уже сообщение с таким telegramMessageId и chatId
-    const existingMessage = await this.messageRepository.findOne({
-      where: {
-        telegramMessageId: createMessageDto.telegramMessageId,
-        chatId: createMessageDto.chatId,
-      },
-    });
+    let existingMessage: MessageEntity | null = null;
 
-    if (existingMessage) {
-      // Если сообщение уже существует, возвращаем его
-      return existingMessage;
+    // Если DTO содержит telegramMessageId, проверяем существование в telegramMessageRepository
+    if (createMessageDto.telegramMessageId) {
+      const telegramMessage = await this.telegramMessageRepository.findOne({
+        where: { telegramMessageId: createMessageDto.telegramMessageId },
+        relations: ['message'],
+      });
+      if (telegramMessage) {
+        return telegramMessage.message;
+      }
     }
 
     const message = this.messageRepository.create({
@@ -35,11 +40,27 @@ export class MessageService {
       messageDate: new Date(createMessageDto.messageDate),
     });
 
-    return await this.messageRepository.save(message);
+    const savedMessage = await this.messageRepository.save(message);
+
+    // Если есть данные для Telegram, создаём расширение
+    if (createMessageDto.telegramMessageId) {
+      const telegramMessage = this.telegramMessageRepository.create({
+        message: savedMessage,
+        telegramMessageId: createMessageDto.telegramMessageId,
+        fromUserId: createMessageDto.fromUserId,
+        fromUsername: createMessageDto.fromUsername,
+        mediaInfo: createMessageDto.mediaInfo,
+        replyTo: createMessageDto.replyTo,
+        forwardInfo: createMessageDto.forwardInfo,
+      });
+      await this.telegramMessageRepository.save(telegramMessage);
+    }
+
+    return savedMessage;
   }
 
+  /** Получение сообщений с фильтрацией, пагинацией и сортировкой */
   async findAll(options?: {
-    chatId?: string;
     type?: MessageType;
     direction?: MessageDirection;
     limit?: number;
@@ -56,42 +77,25 @@ export class MessageService {
       order: { [sortBy]: sortOrder },
     };
 
-    if (options?.limit) {
-      findOptions.take = options.limit;
-    }
-
-    if (options?.offset) {
-      findOptions.skip = options.offset;
-    }
+    if (options?.limit) findOptions.take = options.limit;
+    if (options?.offset) findOptions.skip = options.offset;
 
     const where: any = {};
 
-    if (options?.chatId) {
-      where.chatId = options.chatId;
-    }
-
-    if (options?.type) {
-      where.type = options.type;
-    }
-
-    if (options?.direction) {
-      where.direction = options.direction;
-    }
-
+    if (options?.type) where.type = options.type;
+    if (options?.direction) where.direction = options.direction;
     if (options?.dateFrom && options?.dateTo) {
       where.messageDate = Between(options.dateFrom, options.dateTo);
     } else if (options?.dateFrom) {
       where.messageDate = Between(options.dateFrom, new Date());
     }
 
-    if (Object.keys(where).length > 0) {
-      findOptions.where = where;
-    }
+    if (Object.keys(where).length > 0) findOptions.where = where;
 
     return await this.messageRepository.find(findOptions);
   }
 
-  async findOne(id: number): Promise<MessageEntity> {
+  async findOne(id: string): Promise<MessageEntity> {
     const message = await this.messageRepository.findOne({ where: { id } });
     if (!message) {
       throw new NotFoundException(`Message with ID ${id} not found`);
@@ -99,27 +103,8 @@ export class MessageService {
     return message;
   }
 
-  async findByChatId(chatId: string, limit = 100): Promise<MessageEntity[]> {
-    return await this.messageRepository.find({
-      where: { chatId },
-      order: { messageDate: 'DESC' },
-      take: limit,
-    });
-  }
-
-  async findByTelegramMessageId(
-    telegramMessageId: string,
-    chatId: string,
-  ): Promise<MessageEntity | null> {
-    return await this.messageRepository.findOne({
-      where: { telegramMessageId, chatId },
-    });
-  }
-
-  async update(
-    id: number,
-    updateMessageDto: UpdateMessageDto,
-  ): Promise<MessageEntity> {
+  /** Обновление сообщения */
+  async update(id: string, updateMessageDto: UpdateMessageDto): Promise<MessageEntity> {
     const message = await this.findOne(id);
     Object.assign(message, updateMessageDto);
 
@@ -130,67 +115,54 @@ export class MessageService {
     return await this.messageRepository.save(message);
   }
 
-  async remove(id: number): Promise<void> {
+  /** Удаление сообщения */
+  async remove(id: string): Promise<void> {
     const message = await this.findOne(id);
     await this.messageRepository.remove(message);
   }
 
-  async getMessageStats(chatId?: string): Promise<{
+  /** Получение статистики сообщений */
+  async getMessageStats(): Promise<{
     totalMessages: number;
     messagesByType: Record<MessageType, number>;
     messagesByDirection: Record<MessageDirection, number>;
     dateRange: { from: Date; to: Date } | null;
   }> {
-    const where = chatId ? { chatId } : {};
+    const totalMessages = await this.messageRepository.count();
 
-    const totalMessages = await this.messageRepository.count({ where });
-
-    // Получаем статистику по типам
     const typeStats = await this.messageRepository
       .createQueryBuilder('message')
       .select('message.type', 'type')
       .addSelect('COUNT(*)', 'count')
-      .where(chatId ? 'message.chatId = :chatId' : '1=1', { chatId })
       .groupBy('message.type')
       .getRawMany();
 
-    // Получаем статистику по направлениям
     const directionStats = await this.messageRepository
       .createQueryBuilder('message')
       .select('message.direction', 'direction')
       .addSelect('COUNT(*)', 'count')
-      .where(chatId ? 'message.chatId = :chatId' : '1=1', { chatId })
       .groupBy('message.direction')
       .getRawMany();
 
-    // Получаем диапазон дат
     const dateRange = await this.messageRepository
       .createQueryBuilder('message')
       .select('MIN(message.messageDate)', 'from')
       .addSelect('MAX(message.messageDate)', 'to')
-      .where(chatId ? 'message.chatId = :chatId' : '1=1', { chatId })
       .getRawOne();
 
-    // Формируем результат
-    const messagesByType = Object.values(MessageType).reduce(
-      (acc, type) => {
-        acc[type] = 0;
-        return acc;
-      },
-      {} as Record<MessageType, number>,
-    );
+    const messagesByType = Object.values(MessageType).reduce((acc, type) => {
+      acc[type] = 0;
+      return acc;
+    }, {} as Record<MessageType, number>);
 
     typeStats.forEach((stat) => {
       messagesByType[stat.type] = parseInt(stat.count);
     });
 
-    const messagesByDirection = Object.values(MessageDirection).reduce(
-      (acc, direction) => {
-        acc[direction] = 0;
-        return acc;
-      },
-      {} as Record<MessageDirection, number>,
-    );
+    const messagesByDirection = Object.values(MessageDirection).reduce((acc, dir) => {
+      acc[dir] = 0;
+      return acc;
+    }, {} as Record<MessageDirection, number>);
 
     directionStats.forEach((stat) => {
       messagesByDirection[stat.direction] = parseInt(stat.count);
@@ -200,55 +172,58 @@ export class MessageService {
       totalMessages,
       messagesByType,
       messagesByDirection,
-      dateRange:
-        dateRange.from && dateRange.to
-          ? {
-              from: dateRange.from,
-              to: dateRange.to,
-            }
-          : null,
+      dateRange: dateRange.from && dateRange.to ? { from: dateRange.from, to: dateRange.to } : null,
     };
   }
 
+  /** Получение списка чатов с последними сообщениями */
   async getChatList(): Promise<
     Array<{
-      chatId: string;
+      sessionId: string;
       messageCount: number;
       lastMessageDate: Date;
       lastMessageText?: string;
     }>
   > {
-    const chats = await this.messageRepository
+    const sessions = await this.messageRepository
       .createQueryBuilder('message')
-      .select('message.chatId', 'chatId')
+      .select('message.sessionId', 'sessionId')
       .addSelect('COUNT(*)', 'messageCount')
       .addSelect('MAX(message.messageDate)', 'lastMessageDate')
-      .groupBy('message.chatId')
+      .groupBy('message.sessionId')
       .orderBy('MAX(message.messageDate)', 'DESC')
       .getRawMany();
 
-    // Получаем последнее сообщение для каждого чата
-    const result: Array<{
-      chatId: string;
-      messageCount: number;
-      lastMessageDate: Date;
-      lastMessageText?: string;
-    }> = [];
+    const result: Array<{ sessionId: string; messageCount: number; lastMessageDate: Date; lastMessageText?: string }> = [];
 
-    for (const chat of chats) {
+    for (const session of sessions) {
       const lastMessage = await this.messageRepository.findOne({
-        where: { chatId: chat.chatId },
+        where: { session: { id: session.sessionId } },
         order: { messageDate: 'DESC' },
       });
 
       result.push({
-        chatId: chat.chatId,
-        messageCount: parseInt(chat.messageCount),
-        lastMessageDate: chat.lastMessageDate,
+        sessionId: session.sessionId,
+        messageCount: parseInt(session.messageCount),
+        lastMessageDate: session.lastMessageDate,
         lastMessageText: lastMessage?.text,
       });
     }
 
     return result;
+  }
+
+  /** Создание универсального сообщения без привязки к Telegram */
+  async createUniversal(createUniversalMessageDto: CreateUniversalMessageDto): Promise<MessageEntity> {
+    const message = this.messageRepository.create({
+      text: createUniversalMessageDto.text,
+      type: createUniversalMessageDto.type || MessageType.TEXT,
+      direction: createUniversalMessageDto.direction || MessageDirection.INCOMING,
+      messageDate: new Date(),
+      isBot: createUniversalMessageDto.isBot || false,
+      rawData: createUniversalMessageDto.metadata,
+    });
+
+    return await this.messageRepository.save(message);
   }
 }
