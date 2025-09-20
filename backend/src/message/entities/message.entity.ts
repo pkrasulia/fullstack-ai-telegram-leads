@@ -5,8 +5,10 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  ManyToOne,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
+import { AiSessionEntity } from 'src/ai-session/entities/ai-session.entity';
 
 export enum MessageType {
   TEXT = 'text',
@@ -31,7 +33,7 @@ export enum MessageDirection {
 @Entity('messages')
 @Index(['chatId', 'messageDate'])
 @Index(['telegramMessageId'])
-export class Message {
+export class MessageEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -120,6 +122,11 @@ export class Message {
     name: 'business_connection_id',
   })
   businessConnectionId?: string;
+
+  @ManyToOne(() => AiSessionEntity, (session) => session.messages, {
+    onDelete: 'CASCADE'
+  })
+  session: AiSessionEntity;
 
   @Column({ type: 'json', nullable: true, name: 'raw_data' })
   rawData?: any;

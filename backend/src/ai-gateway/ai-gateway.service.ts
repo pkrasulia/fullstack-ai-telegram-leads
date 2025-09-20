@@ -1,3 +1,5 @@
+// Gateway ADK service
+
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
@@ -285,7 +287,7 @@ export class AiGatewayService {
    * Создает новую сессию в ADK
    * @param userId - ID пользователя
    */
-  private async createAdkSession(userId: string): Promise<string | null> {
+  async createAdkSession(userId: string): Promise<string | null> {
     try {
       this.logger.log('Creating new ADK session', { userId });
 

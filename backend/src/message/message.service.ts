@@ -4,7 +4,7 @@ import { Repository, FindManyOptions, Between } from 'typeorm';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import {
-  Message,
+  MessageEntity,
   MessageType,
   MessageDirection,
 } from './entities/message.entity';
@@ -12,11 +12,11 @@ import {
 @Injectable()
 export class MessageService {
   constructor(
-    @InjectRepository(Message)
-    private readonly messageRepository: Repository<Message>,
+    @InjectRepository(MessageEntity)
+    private readonly messageRepository: Repository<MessageEntity>,
   ) {}
 
-  async create(createMessageDto: CreateMessageDto): Promise<Message> {
+  async create(createMessageDto: CreateMessageDto): Promise<MessageEntity> {
     // Проверяем, не существует ли уже сообщение с таким telegramMessageId и chatId
     const existingMessage = await this.messageRepository.findOne({
       where: {
@@ -48,11 +48,11 @@ export class MessageService {
     dateTo?: Date;
     sortBy?: string;
     sortOrder?: 'ASC' | 'DESC';
-  }): Promise<Message[]> {
+  }): Promise<MessageEntity[]> {
     const sortBy = options?.sortBy || 'messageDate';
     const sortOrder = options?.sortOrder || 'DESC';
 
-    const findOptions: FindManyOptions<Message> = {
+    const findOptions: FindManyOptions<MessageEntity> = {
       order: { [sortBy]: sortOrder },
     };
 
@@ -91,7 +91,7 @@ export class MessageService {
     return await this.messageRepository.find(findOptions);
   }
 
-  async findOne(id: number): Promise<Message> {
+  async findOne(id: number): Promise<MessageEntity> {
     const message = await this.messageRepository.findOne({ where: { id } });
     if (!message) {
       throw new NotFoundException(`Message with ID ${id} not found`);
@@ -99,7 +99,7 @@ export class MessageService {
     return message;
   }
 
-  async findByChatId(chatId: string, limit = 100): Promise<Message[]> {
+  async findByChatId(chatId: string, limit = 100): Promise<MessageEntity[]> {
     return await this.messageRepository.find({
       where: { chatId },
       order: { messageDate: 'DESC' },
@@ -110,7 +110,7 @@ export class MessageService {
   async findByTelegramMessageId(
     telegramMessageId: string,
     chatId: string,
-  ): Promise<Message | null> {
+  ): Promise<MessageEntity | null> {
     return await this.messageRepository.findOne({
       where: { telegramMessageId, chatId },
     });
@@ -119,7 +119,7 @@ export class MessageService {
   async update(
     id: number,
     updateMessageDto: UpdateMessageDto,
-  ): Promise<Message> {
+  ): Promise<MessageEntity> {
     const message = await this.findOne(id);
     Object.assign(message, updateMessageDto);
 
