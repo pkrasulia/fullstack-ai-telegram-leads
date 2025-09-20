@@ -28,7 +28,7 @@ import { MessageService } from './message.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import {
-  Message,
+  MessageEntity,
   MessageType,
   MessageDirection,
 } from './entities/message.entity';
@@ -49,10 +49,10 @@ export class MessageController {
   @ApiResponse({
     status: 201,
     description: 'Сообщение успешно создано',
-    type: Message,
+    type: MessageEntity,
   })
   @ApiResponse({ status: 400, description: 'Некорректные данные' })
-  async create(@Body() createMessageDto: CreateMessageDto): Promise<Message> {
+  async create(@Body() createMessageDto: CreateMessageDto): Promise<MessageEntity> {
     return this.messageService.create(createMessageDto);
   }
 
@@ -108,7 +108,7 @@ export class MessageController {
   @ApiResponse({
     status: 200,
     description: 'Список сообщений',
-    type: [Message],
+    type: [MessageEntity],
   })
   async findAll(
     @Query('chatId') chatId?: string,
@@ -120,7 +120,7 @@ export class MessageController {
     @Query('dateTo') dateTo?: string,
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: 'ASC' | 'DESC',
-  ): Promise<Message[]> {
+  ): Promise<MessageEntity[]> {
     const options: any = {};
 
     if (chatId) options.chatId = chatId;
@@ -163,20 +163,20 @@ export class MessageController {
     required: false,
     description: 'Лимит количества сообщений (по умолчанию 100)',
   })
-  @ApiResponse({ status: 200, description: 'Сообщения чата', type: [Message] })
+  @ApiResponse({ status: 200, description: 'Сообщения чата', type: [MessageEntity] })
   async findByChatId(
     @Param('chatId') chatId: string,
     @Query('limit') limit?: number,
-  ): Promise<Message[]> {
+  ): Promise<MessageEntity[]> {
     return this.messageService.findByChatId(chatId, limit);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Получить сообщение по ID' })
   @ApiParam({ name: 'id', description: 'ID сообщения' })
-  @ApiResponse({ status: 200, description: 'Сообщение найдено', type: Message })
+  @ApiResponse({ status: 200, description: 'Сообщение найдено', type: MessageEntity })
   @ApiResponse({ status: 404, description: 'Сообщение не найдено' })
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<Message> {
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<MessageEntity> {
     return this.messageService.findOne(id);
   }
 
@@ -184,12 +184,12 @@ export class MessageController {
   @ApiOperation({ summary: 'Найти сообщение по Telegram ID и Chat ID' })
   @ApiParam({ name: 'telegramMessageId', description: 'Telegram Message ID' })
   @ApiParam({ name: 'chatId', description: 'Chat ID' })
-  @ApiResponse({ status: 200, description: 'Сообщение найдено', type: Message })
+  @ApiResponse({ status: 200, description: 'Сообщение найдено', type: MessageEntity })
   @ApiResponse({ status: 404, description: 'Сообщение не найдено' })
   async findByTelegramMessageId(
     @Param('telegramMessageId') telegramMessageId: string,
     @Param('chatId') chatId: string,
-  ): Promise<Message> {
+  ): Promise<MessageEntity> {
     const message = await this.messageService.findByTelegramMessageId(
       telegramMessageId,
       chatId,
@@ -208,13 +208,13 @@ export class MessageController {
   @ApiResponse({
     status: 200,
     description: 'Сообщение обновлено',
-    type: Message,
+    type: MessageEntity,
   })
   @ApiResponse({ status: 404, description: 'Сообщение не найдено' })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateMessageDto: UpdateMessageDto,
-  ): Promise<Message> {
+  ): Promise<MessageEntity> {
     return this.messageService.update(id, updateMessageDto);
   }
 
