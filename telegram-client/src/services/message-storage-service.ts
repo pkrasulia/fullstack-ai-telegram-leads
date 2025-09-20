@@ -231,7 +231,8 @@ export class MessageStorageService {
   }
 
   /**
-   * Сохраняет сообщение в базу данных
+   * Сохраняет сообщение в базу данных через новый Chat API
+   * Теперь сообщения сохраняются автоматически при отправке через ChatService
    */
   async saveMessage(
     msg: Message, 
@@ -239,63 +240,15 @@ export class MessageStorageService {
     isBusiness: boolean = false,
     businessConnectionId?: string
   ): Promise<boolean> {
-    const messageData = this.convertTelegramMessage(msg, direction, isBusiness, businessConnectionId);
-    
-    try {
-      const response = await axios.post(
-        `${this.backendUrl}/api/${this.apiVersion}/telegram/messages`,
-        messageData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          timeout: 10000,
-        }
-      );
-
-      if (response.status === 201) {
-        mainLogger.info('Message saved to database', {
-          messageId: messageData.telegramMessageId,
-          chatId: messageData.chatId,
-          type: messageData.type,
-          direction: messageData.direction,
-        });
-        return true;
-      }
-
-      mainLogger.warn('Unexpected response when saving message', {
-        status: response.status,
-        messageId: messageData.telegramMessageId,
-      });
-      return false;
-
-    } catch (error: any) {
-      let errorMessage = 'Unknown error';
-      let errorCode = 'UNKNOWN';
-        
-      if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-        errorMessage = `Backend connection failed: ${this.backendUrl}`;
-        errorCode = 'CONNECTION_FAILED';
-      } else if (error.response) {
-        errorMessage = `Backend API error: ${error.response.status} - ${error.response.statusText}`;
-        errorCode = 'API_ERROR';
-      } else if (error.request) {
-        errorMessage = 'No response from backend server';
-        errorCode = 'NO_RESPONSE';
-      } else {
-        errorMessage = error.message || 'Unknown error';
-      }
-
-      mainLogger.error('Failed to save message to database', {
-        messageId: messageData.telegramMessageId,
-        chatId: messageData.chatId,
-        backendUrl: this.backendUrl,
-        errorCode,
-        error: errorMessage,
-        ...(errorCode === 'UNKNOWN' && { stack: error.stack }),
-      });
-      return false;
-    }
+    // Сообщения теперь сохраняются автоматически через ChatService.sendMessage()
+    // Этот метод оставлен для совместимости, но фактически не выполняет HTTP запрос
+    mainLogger.info('Message will be saved through ChatService', {
+      messageId: msg.message_id,
+      chatId: msg.chat.id,
+      direction,
+      isBusiness,
+    });
+    return true;
   }
 
   /**
