@@ -1,6 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsOptional, IsEnum, IsObject } from 'class-validator';
-import { MessageType, MessageDirection } from '../../message/entities/message.entity';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsObject,
+} from 'class-validator';
+import {
+  MessageType,
+  MessageDirection,
+} from '../../message/entities/message.entity';
 
 export class SendMessageDto {
   @ApiProperty({ description: 'ID сессии' })
@@ -13,19 +22,19 @@ export class SendMessageDto {
   @IsString()
   text: string;
 
-  @ApiProperty({ 
-    enum: MessageType, 
+  @ApiProperty({
+    enum: MessageType,
     description: 'Тип сообщения',
-    default: MessageType.TEXT
+    default: MessageType.TEXT,
   })
   @IsEnum(MessageType)
   @IsOptional()
   type?: MessageType = MessageType.TEXT;
 
-  @ApiProperty({ 
-    enum: MessageDirection, 
+  @ApiProperty({
+    enum: MessageDirection,
     description: 'Направление сообщения',
-    default: MessageDirection.INCOMING
+    default: MessageDirection.INCOMING,
   })
   @IsEnum(MessageDirection)
   @IsOptional()
@@ -36,7 +45,10 @@ export class SendMessageDto {
   @IsObject()
   metadata?: Record<string, any>;
 
-  @ApiPropertyOptional({ description: 'Является ли сообщение от бота', default: false })
+  @ApiPropertyOptional({
+    description: 'Является ли сообщение от бота',
+    default: false,
+  })
   @IsOptional()
   isBot?: boolean = false;
 }

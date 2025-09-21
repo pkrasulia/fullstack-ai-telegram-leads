@@ -1,9 +1,9 @@
-import { IsString } from "class-validator";
+import { IsString } from 'class-validator';
 
 export class CreateAiSessionDto {
-    @IsString()
-    title: string
+  @IsString()
+  title: string;
 
-    @IsString()
-    user_id: string
+  @IsString()
+  user_id: string;
 }

@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -16,9 +11,7 @@ import { RoleEnum } from '../roles/roles.enum';
 import { RolesGuard } from '../roles/roles.guard';
 import { MessageService } from './message.service';
 import { CreateMessageDto } from './dto/create-message.dto';
-import {
-  MessageEntity,
-} from './entities/message.entity';
+import { MessageEntity } from './entities/message.entity';
 
 @ApiBearerAuth()
 @Roles(RoleEnum.admin, RoleEnum.service)
@@ -39,7 +32,9 @@ export class MessageController {
     type: MessageEntity,
   })
   @ApiResponse({ status: 400, description: 'Некорректные данные' })
-  async create(@Body() createMessageDto: CreateMessageDto): Promise<MessageEntity> {
+  async create(
+    @Body() createMessageDto: CreateMessageDto,
+  ): Promise<MessageEntity> {
     return this.messageService.create(createMessageDto);
   }
 }

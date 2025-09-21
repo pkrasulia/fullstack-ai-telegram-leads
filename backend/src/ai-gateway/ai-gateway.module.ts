@@ -3,6 +3,6 @@ import { AiGatewayService } from './ai-gateway.service';
 
 @Module({
   providers: [AiGatewayService],
-  exports: [AiGatewayService]
+  exports: [AiGatewayService],
 })
 export class AiGatewayModule {}

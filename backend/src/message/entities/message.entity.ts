@@ -63,7 +63,7 @@ export class MessageEntity {
   isBusiness: boolean;
 
   @ManyToOne(() => AiSessionEntity, (session) => session.messages, {
-    onDelete: 'CASCADE'
+    onDelete: 'CASCADE',
   })
   session: AiSessionEntity;
 

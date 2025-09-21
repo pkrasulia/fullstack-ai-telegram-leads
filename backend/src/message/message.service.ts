@@ -104,7 +104,10 @@ export class MessageService {
   }
 
   /** Обновление сообщения */
-  async update(id: string, updateMessageDto: UpdateMessageDto): Promise<MessageEntity> {
+  async update(
+    id: string,
+    updateMessageDto: UpdateMessageDto,
+  ): Promise<MessageEntity> {
     const message = await this.findOne(id);
     Object.assign(message, updateMessageDto);
 
@@ -150,19 +153,25 @@ export class MessageService {
       .addSelect('MAX(message.messageDate)', 'to')
       .getRawOne();
 
-    const messagesByType = Object.values(MessageType).reduce((acc, type) => {
-      acc[type] = 0;
-      return acc;
-    }, {} as Record<MessageType, number>);
+    const messagesByType = Object.values(MessageType).reduce(
+      (acc, type) => {
+        acc[type] = 0;
+        return acc;
+      },
+      {} as Record<MessageType, number>,
+    );
 
     typeStats.forEach((stat) => {
       messagesByType[stat.type] = parseInt(stat.count);
     });
 
-    const messagesByDirection = Object.values(MessageDirection).reduce((acc, dir) => {
-      acc[dir] = 0;
-      return acc;
-    }, {} as Record<MessageDirection, number>);
+    const messagesByDirection = Object.values(MessageDirection).reduce(
+      (acc, dir) => {
+        acc[dir] = 0;
+        return acc;
+      },
+      {} as Record<MessageDirection, number>,
+    );
 
     directionStats.forEach((stat) => {
       messagesByDirection[stat.direction] = parseInt(stat.count);
@@ -172,7 +181,10 @@ export class MessageService {
       totalMessages,
       messagesByType,
       messagesByDirection,
-      dateRange: dateRange.from && dateRange.to ? { from: dateRange.from, to: dateRange.to } : null,
+      dateRange:
+        dateRange.from && dateRange.to
+          ? { from: dateRange.from, to: dateRange.to }
+          : null,
     };
   }
 
@@ -194,7 +206,12 @@ export class MessageService {
       .orderBy('MAX(message.messageDate)', 'DESC')
       .getRawMany();
 
-    const result: Array<{ sessionId: string; messageCount: number; lastMessageDate: Date; lastMessageText?: string }> = [];
+    const result: Array<{
+      sessionId: string;
+      messageCount: number;
+      lastMessageDate: Date;
+      lastMessageText?: string;
+    }> = [];
 
     for (const session of sessions) {
       const lastMessage = await this.messageRepository.findOne({
@@ -214,11 +231,14 @@ export class MessageService {
   }
 
   /** Создание универсального сообщения без привязки к Telegram */
-  async createUniversal(createUniversalMessageDto: CreateUniversalMessageDto): Promise<MessageEntity> {
+  async createUniversal(
+    createUniversalMessageDto: CreateUniversalMessageDto,
+  ): Promise<MessageEntity> {
     const message = this.messageRepository.create({
       text: createUniversalMessageDto.text,
       type: createUniversalMessageDto.type || MessageType.TEXT,
-      direction: createUniversalMessageDto.direction || MessageDirection.INCOMING,
+      direction:
+        createUniversalMessageDto.direction || MessageDirection.INCOMING,
       messageDate: new Date(),
       isBot: createUniversalMessageDto.isBot || false,
       rawData: createUniversalMessageDto.metadata,
