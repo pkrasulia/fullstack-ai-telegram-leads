@@ -23,7 +23,9 @@ export class AiSessionEntity {
   @Column({ name: 'adk_session_id' })
   adkSessionId: string;
 
-  @OneToMany(() => MessageEntity, (message) => message.session, { cascade: true })
+  @OneToMany(() => MessageEntity, (message) => message.session, {
+    cascade: true,
+  })
   messages: MessageEntity[];
 
   @CreateDateColumn({ name: 'created_at' })

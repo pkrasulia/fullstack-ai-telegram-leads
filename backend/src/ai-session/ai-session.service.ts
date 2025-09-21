@@ -14,29 +14,38 @@ export class AiSessionService {
   constructor(
     private readonly aiGatewayService: AiGatewayService,
     @InjectRepository(AiSessionEntity)
-    private readonly aiSessionRepository: Repository<AiSessionEntity>
+    private readonly aiSessionRepository: Repository<AiSessionEntity>,
   ) {}
-  async create(createAiSessionDto: CreateAiSessionDto): Promise<AiSessionEntity> {
+  async create(
+    createAiSessionDto: CreateAiSessionDto,
+  ): Promise<AiSessionEntity> {
     try {
       // Создаём ADK-сессию через сервис-шлюз
-      const newSessionId = await this.aiGatewayService.createAdkSession(createAiSessionDto.user_id);
+      const newSessionId = await this.aiGatewayService.createAdkSession(
+        createAiSessionDto.user_id,
+      );
       if (!newSessionId) {
         throw new Error('Не удалось получить идентификатор ADK-сессии.');
       }
-  
+
       // Создаём сущность для сохранения в базе
       const newSessionEntity = this.aiSessionRepository.create({
         title: createAiSessionDto.title.trim(),
         adkSessionId: newSessionId,
         userId: createAiSessionDto.user_id,
       });
-  
+
       // Сохраняем и возвращаем готовую сущность
       return await this.aiSessionRepository.save(newSessionEntity);
     } catch (error) {
       // Логируем и пробрасываем исключение с контекстом
-      this.logger.error('Ошибка при создании AI-сессии', { error, dto: createAiSessionDto });
-      throw new Error(`Ошибка при создании AI-сессии: ${(error as Error).message}`);
+      this.logger.error('Ошибка при создании AI-сессии', {
+        error,
+        dto: createAiSessionDto,
+      });
+      throw new Error(
+        `Ошибка при создании AI-сессии: ${(error as Error).message}`,
+      );
     }
   }
 }

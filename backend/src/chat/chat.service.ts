@@ -1,8 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AiSessionEntity } from '../ai-session/entities/ai-session.entity';
-import { MessageEntity, MessageType, MessageDirection } from '../message/entities/message.entity';
+import {
+  MessageEntity,
+  MessageType,
+  MessageDirection,
+} from '../message/entities/message.entity';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 import { AiSessionService } from '../ai-session/ai-session.service';
@@ -24,7 +32,9 @@ export class ChatService {
   /**
    * Создать новую сессию чата
    */
-  async createSession(createSessionDto: CreateSessionDto): Promise<AiSessionEntity> {
+  async createSession(
+    createSessionDto: CreateSessionDto,
+  ): Promise<AiSessionEntity> {
     return this.aiSessionService.create({
       title: createSessionDto.title,
       user_id: createSessionDto.userId,
@@ -61,10 +71,12 @@ export class ChatService {
   /**
    * Отправить сообщение в сессию
    */
-  async sendMessage(sendMessageDto: SendMessageDto): Promise<{ message: MessageEntity; aiResponse?: any }> {
+  async sendMessage(
+    sendMessageDto: SendMessageDto,
+  ): Promise<{ message: MessageEntity; aiResponse?: any }> {
     // Проверяем существование сессии
     const session = await this.getSession(sendMessageDto.sessionId);
-    
+
     // Создаем сообщение пользователя
     const userMessage = await this.messageService.createUniversal({
       text: sendMessageDto.text,
@@ -118,9 +130,13 @@ export class ChatService {
   /**
    * Получить историю сообщений сессии
    */
-  async getSessionMessages(sessionId: string, limit: number = 50, offset: number = 0): Promise<MessageEntity[]> {
+  async getSessionMessages(
+    sessionId: string,
+    limit: number = 50,
+    offset: number = 0,
+  ): Promise<MessageEntity[]> {
     const session = await this.getSession(sessionId);
-    
+
     return this.messageRepository.find({
       where: { session: { id: sessionId } },
       order: { messageDate: 'ASC' },

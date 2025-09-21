@@ -12,7 +12,11 @@ import { TelegramMessageModule } from '../telegram-message/telegram-message.modu
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([AiSessionEntity, MessageEntity, TelegramMessageEntity]),
+    TypeOrmModule.forFeature([
+      AiSessionEntity,
+      MessageEntity,
+      TelegramMessageEntity,
+    ]),
     TelegramMessageModule,
   ],
   controllers: [ChatController],

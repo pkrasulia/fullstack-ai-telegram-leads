@@ -48,7 +48,9 @@ export class ChatController {
   })
   @ApiResponse({ status: 400, description: 'Некорректные данные' })
   @ApiResponse({ status: 500, description: 'Внутренняя ошибка сервера' })
-  async createSession(@Body() createSessionDto: CreateSessionDto): Promise<AiSessionEntity> {
+  async createSession(
+    @Body() createSessionDto: CreateSessionDto,
+  ): Promise<AiSessionEntity> {
     try {
       return await this.chatService.createSession(createSessionDto);
     } catch (error) {
@@ -71,7 +73,9 @@ export class ChatController {
     type: AiSessionEntity,
   })
   @ApiResponse({ status: 404, description: 'Сессия не найдена' })
-  async getSession(@Param('sessionId') sessionId: string): Promise<AiSessionEntity> {
+  async getSession(
+    @Param('sessionId') sessionId: string,
+  ): Promise<AiSessionEntity> {
     return this.chatService.getSession(sessionId);
   }
 
@@ -83,7 +87,9 @@ export class ChatController {
     description: 'Список сессий пользователя',
     type: [AiSessionEntity],
   })
-  async getUserSessions(@Query('userId') userId: string): Promise<AiSessionEntity[]> {
+  async getUserSessions(
+    @Query('userId') userId: string,
+  ): Promise<AiSessionEntity[]> {
     return this.chatService.getUserSessions(userId);
   }
 
@@ -125,8 +131,18 @@ export class ChatController {
   @Get('sessions/:sessionId/messages')
   @ApiOperation({ summary: 'Получить историю сообщений сессии' })
   @ApiParam({ name: 'sessionId', description: 'ID сессии' })
-  @ApiQuery({ name: 'limit', description: 'Количество сообщений', required: false, type: Number })
-  @ApiQuery({ name: 'offset', description: 'Смещение', required: false, type: Number })
+  @ApiQuery({
+    name: 'limit',
+    description: 'Количество сообщений',
+    required: false,
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'offset',
+    description: 'Смещение',
+    required: false,
+    type: Number,
+  })
   @ApiResponse({
     status: 200,
     description: 'История сообщений',
@@ -146,7 +162,9 @@ export class ChatController {
   @ApiParam({ name: 'sessionId', description: 'ID сессии' })
   @ApiResponse({ status: 200, description: 'Сессия удалена' })
   @ApiResponse({ status: 404, description: 'Сессия не найдена' })
-  async deleteSession(@Param('sessionId') sessionId: string): Promise<{ message: string }> {
+  async deleteSession(
+    @Param('sessionId') sessionId: string,
+  ): Promise<{ message: string }> {
     await this.chatService.deleteSession(sessionId);
     return { message: 'Сессия успешно удалена' };
   }
