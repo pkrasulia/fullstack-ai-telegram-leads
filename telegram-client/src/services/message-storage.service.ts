@@ -1,74 +1,25 @@
-import axios from 'axios';
-import { Message } from 'node-telegram-bot-api';
-import { mainLogger } from '../app/logs/logger';
+import axios from "axios";
+import { Message } from "node-telegram-bot-api";
+import { telegramConfig } from "../config/telegram.config";
+import { BaseService } from "../shared/base/base-service";
+import { ProcessedMessage, MessageType, MessageDirection, MediaInfo, ReplyInfo, ForwardInfo } from "../shared/types";
 
-export interface MessageData {
-  telegramMessageId: string;
-  chatId: string;
-  fromUserId?: string;
-  fromUsername?: string;
-  fromFirstName?: string;
-  fromLastName?: string;
-  text?: string;
-  type: MessageType;
-  direction: MessageDirection;
-  messageDate: string;
-  mediaInfo?: {
-    fileId?: string;
-    fileName?: string;
-    fileSize?: number;
-    mimeType?: string;
-    width?: number;
-    height?: number;
-    duration?: number;
-  };
-  replyTo?: {
-    messageId: string;
-    text?: string;
-    fromUsername?: string;
-  };
-  forwardInfo?: {
-    fromChatId?: string;
-    fromMessageId?: string;
-    fromUsername?: string;
-    date?: Date;
-  };
-  isBusiness?: boolean;
-  businessConnectionId?: string;
-  rawData?: any;
-  isBot?: boolean;
-}
-
-export enum MessageType {
-  TEXT = 'text',
-  PHOTO = 'photo',
-  VIDEO = 'video',
-  AUDIO = 'audio',
-  VOICE = 'voice',
-  DOCUMENT = 'document',
-  STICKER = 'sticker',
-  LOCATION = 'location',
-  CONTACT = 'contact',
-  ANIMATION = 'animation',
-  VIDEO_NOTE = 'video_note',
-  OTHER = 'other',
-}
-
-export enum MessageDirection {
-  INCOMING = 'incoming',
-  OUTGOING = 'outgoing',
-}
-
-export class MessageStorageService {
+/**
+ * Message storage service for processing and storing Telegram messages
+ */
+export class MessageStorageService extends BaseService {
   private readonly backendUrl: string;
-  private readonly apiVersion: string = 'v1';
 
-  constructor(backendUrl: string = process.env.BACKEND_URL || 'http://backend:4343') {
-    this.backendUrl = backendUrl;
+  constructor() {
+    super("MessageStorageService");
+    this.backendUrl = telegramConfig.backendUrl;
+    this.logInitialization();
   }
 
   /**
-   * Определяет тип сообщения на основе содержимого
+   * Determines the message type based on content
+   * @param msg - Telegram message
+   * @returns Message type
    */
   private determineMessageType(msg: Message): MessageType {
     if (msg.photo) return MessageType.PHOTO;
@@ -86,11 +37,13 @@ export class MessageStorageService {
   }
 
   /**
-   * Извлекает информацию о медиа из сообщения
+   * Extracts media information from message
+   * @param msg - Telegram message
+   * @returns Media information or undefined
    */
-  private extractMediaInfo(msg: Message): MessageData['mediaInfo'] | undefined {
+  private extractMediaInfo(msg: Message): MediaInfo | undefined {
     if (msg.photo && msg.photo.length > 0) {
-      const photo = msg.photo[msg.photo.length - 1]; // Берем самое большое фото
+      const photo = msg.photo[msg.photo.length - 1]; // Get largest photo
       return {
         fileId: photo.file_id,
         fileSize: photo.file_size,
@@ -172,9 +125,11 @@ export class MessageStorageService {
   }
 
   /**
-   * Извлекает информацию о reply
+   * Extracts reply information from message
+   * @param msg - Telegram message
+   * @returns Reply information or undefined
    */
-  private extractReplyInfo(msg: Message): MessageData['replyTo'] {
+  private extractReplyInfo(msg: Message): ReplyInfo | undefined {
     if (msg.reply_to_message) {
       return {
         messageId: msg.reply_to_message.message_id.toString(),
@@ -186,9 +141,11 @@ export class MessageStorageService {
   }
 
   /**
-   * Извлекает информацию о forward
+   * Extracts forward information from message
+   * @param msg - Telegram message
+   * @returns Forward information or undefined
    */
-  private extractForwardInfo(msg: Message): MessageData['forwardInfo'] {
+  private extractForwardInfo(msg: Message): ForwardInfo | undefined {
     if (msg.forward_from || msg.forward_from_chat) {
       return {
         fromChatId: msg.forward_from_chat?.id?.toString(),
@@ -201,14 +158,19 @@ export class MessageStorageService {
   }
 
   /**
-   * Преобразует Telegram сообщение в формат для API
+   * Converts Telegram message to processed message format
+   * @param msg - Telegram message
+   * @param direction - Message direction
+   * @param isBusiness - Is business message
+   * @param businessConnectionId - Business connection ID
+   * @returns Processed message
    */
   private convertTelegramMessage(
-    msg: Message, 
+    msg: Message,
     direction: MessageDirection = MessageDirection.INCOMING,
     isBusiness: boolean = false,
-    businessConnectionId?: string
-  ): MessageData {
+    businessConnectionId?: string,
+  ): ProcessedMessage {
     return {
       telegramMessageId: msg.message_id.toString(),
       chatId: msg.chat.id.toString(),
@@ -231,50 +193,87 @@ export class MessageStorageService {
   }
 
   /**
-   * Сохраняет сообщение в базу данных через новый Chat API
-   * Теперь сообщения сохраняются автоматически при отправке через ChatService
+   * Saves a message to storage
+   * @param msg - Telegram message
+   * @param direction - Message direction
+   * @param isBusiness - Is business message
+   * @param businessConnectionId - Business connection ID
+   * @returns Promise with success status
    */
-  async saveMessage(
-    msg: Message, 
-    direction: MessageDirection = MessageDirection.INCOMING,
-    isBusiness: boolean = false,
-    businessConnectionId?: string
-  ): Promise<boolean> {
-    // Сообщения теперь сохраняются автоматически через ChatService.sendMessage()
-    // Этот метод оставлен для совместимости, но фактически не выполняет HTTP запрос
-    mainLogger.info('Message will be saved through ChatService', {
-      messageId: msg.message_id,
-      chatId: msg.chat.id,
-      direction,
-      isBusiness,
-    });
-    return true;
+  async saveMessage(msg: Message, direction: MessageDirection = MessageDirection.INCOMING, isBusiness: boolean = false, _businessConnectionId?: string): Promise<boolean> {
+    try {
+      const processedMessage = this.convertTelegramMessage(msg, direction, isBusiness, _businessConnectionId);
+
+      this.logInfo("Message processed for storage", {
+        messageId: processedMessage.telegramMessageId,
+        chatId: processedMessage.chatId,
+        type: processedMessage.type,
+        direction: processedMessage.direction,
+        isBusiness: processedMessage.isBusiness,
+      });
+
+      // Messages are now automatically saved through ChatService.sendMessage()
+      // This method is kept for compatibility but doesn't perform HTTP requests
+      return true;
+    } catch (error) {
+      this.logError("Failed to process message for storage", error, {
+        messageId: msg.message_id,
+        chatId: msg.chat.id,
+        direction,
+        isBusiness,
+        businessConnectionId: _businessConnectionId,
+      });
+      return false;
+    }
   }
 
   /**
-   * Сохраняет входящее сообщение
+   * Saves an incoming message
+   * @param msg - Telegram message
+   * @param isBusiness - Is business message
+   * @param businessConnectionId - Business connection ID
+   * @returns Promise with success status
    */
   async saveIncomingMessage(msg: Message, isBusiness: boolean = false, businessConnectionId?: string): Promise<boolean> {
     return this.saveMessage(msg, MessageDirection.INCOMING, isBusiness, businessConnectionId);
   }
 
   /**
-   * Сохраняет исходящее сообщение
+   * Saves an outgoing message
+   * @param msg - Telegram message
+   * @param isBusiness - Is business message
+   * @param businessConnectionId - Business connection ID
+   * @returns Promise with success status
    */
   async saveOutgoingMessage(msg: Message, isBusiness: boolean = false, businessConnectionId?: string): Promise<boolean> {
     return this.saveMessage(msg, MessageDirection.OUTGOING, isBusiness, businessConnectionId);
   }
 
   /**
-   * Проверяет доступность backend API
+   * Checks backend health
+   * @returns Promise with health status
    */
   async checkBackendHealth(): Promise<boolean> {
-    try {
-      const response = await axios.get(`${this.backendUrl}/health`, { timeout: 5000 });
+    const result = await this.safeExecute(async () => {
+      const response = await axios.get(`${this.backendUrl}/health`, {
+        timeout: telegramConfig.healthCheckTimeoutMs,
+      });
       return response.status === 200;
-    } catch (error: any) {
-      mainLogger.warn('Backend health check failed', { error: error.message });
-      return false;
-    }
+    }, "checkBackendHealth");
+    return result || false;
+  }
+
+  /**
+   * Gets message statistics
+   * @returns Promise with statistics
+   */
+  async getMessageStatistics(): Promise<Record<string, any>> {
+    // This would typically query the backend for statistics
+    // For now, return basic info
+    return {
+      service: "MessageStorageService",
+      status: "active",
+      backendUrl: this.backendUrl,
+    };
   }
 }

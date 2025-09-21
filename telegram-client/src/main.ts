@@ -1,370 +1,75 @@
-import dotenv from "dotenv";
-import { Message } from "node-telegram-bot-api";
-import { getOrCreateUserSession, loadUserSessions, saveUserSessions, sendMessageToGateway, UserSession } from "./services/gateway-service";
-import { TelegramService } from "./services/telegram-service";
-import { MessageStorageService, MessageDirection } from "./services/message-storage-service";
+#!/usr/bin/env node
+
+/**
+ * Telegram AI Assistant
+ *
+ * A professional Telegram bot that integrates with a backend AI service
+ * to provide intelligent responses to users. Supports both regular and
+ * business messages with comprehensive session management.
+ *
+ * @author AI Assistant
+ * @version 2.0.0
+ */
+
+import { TelegramApp } from "./app/telegram-app";
 import { mainLogger } from "./app/logs/logger";
+import { telegramConfig } from "./config/telegram.config";
+import { validateConfig } from "./shared/utils";
 
-dotenv.config({ path: "../../.env" });
+/**
+ * Main application entry point
+ */
+async function main(): Promise<void> {
+  try {
+    // Validate configuration
+    const configValidation = validateConfig(telegramConfig);
+    if (!configValidation.isValid) {
+      mainLogger.error("Configuration validation failed", {
+        errors: configValidation.errors,
+      });
+      process.exit(1);
+    }
 
-const token: string = process.env.TELEGRAM_BOT_TOKEN || "7859566653:AAG8JfRotqlK5FldOYMZm9X6MQG48r_2GGw";
-const backendBaseUrl: string = process.env.BACKEND_BASE_URL || "http://backend:4343/api/v1";
+    mainLogger.info("🚀 Starting Telegram AI Assistant v2.0.0");
+    mainLogger.info("Configuration validated successfully");
 
-mainLogger.info("Telegram assistant started with Backend Chat API integration");
-mainLogger.info("Configuration check:");
-mainLogger.info(`- Telegram Bot Token: ${token.length > 10 ? "Configured" : "Missing"}`);
-mainLogger.info(`- Backend Base URL: ${backendBaseUrl}`);
-
-// Проверяем валидность токена
-if (!token || token === "YOUR_BOT_TOKEN_HERE") {
-  mainLogger.error("ERROR: Telegram Bot Token not found in .env file");
-  process.exit(1);
+    // Create and start the application
+    const app = new TelegramApp();
+    await app.start();
+  } catch (error) {
+    mainLogger.error("Fatal error during application startup", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    process.exit(1);
+  }
 }
 
-const telegramService = new TelegramService(token);
-const messageStorageService = new MessageStorageService();
-
-// Настройки
-let assistantEnabled = true;
-const SESSIONS_FILE = "user_sessions.json";
-
-// Интерфейс UserSession импортируется из gateway-service
-
-// Хранение сессий пользователей
-const userSessions = new Map<number, UserSession>();
-
-// Fallback response when backend is unavailable
-function getFallbackResponse(): string {
-  const responses = ["Service temporarily unavailable. Please try again.", "Connection error. Retrying...", "Technical issues detected. Please retry your request."];
-  return responses[Math.floor(Math.random() * responses.length)];
-}
-
-// Business connection handler
-telegramService.onBusinessConnection((connection: any) => {
-  mainLogger.info("Business account connection", {
-    user: connection.user.first_name,
-    connectionId: connection.id,
-  });
-});
-
-// Главная логика// Обработчик business сообщений
-telegramService.onBusinessMessage(async (msg: any) => {
-  if (!assistantEnabled) return;
-
-  const chatId = msg.chat.id;
-  const messageText = msg.text || "";
-  const businessConnectionId = msg.business_connection_id;
-
-  // Сохраняем сообщение в базу данных
-  await messageStorageService.saveIncomingMessage(msg, true, businessConnectionId);
-
-  mainLogger.info("Business message received", {
-    chatId,
-    messageText: messageText.substring(0, 100),
-    userName: msg.from?.first_name || "Unknown",
-    businessConnectionId
-  });
-
-  // Проверяем, является ли сообщение командой
-  if (messageText.startsWith('/')) {
-    mainLogger.info("Business message is a command, processing separately", { command: messageText });
-    return; // Команды не отправляем в генерацию
-  }
-
-  try {
-    // Получаем или создаем сессию
-    const userName = msg.from?.first_name || "Unknown";
-    const session = await getOrCreateUserSession(chatId, userName);
-    if (!session) {
-      mainLogger.error("Failed to get user session", { chatId, userName });
-      await telegramService.sendMessage(chatId, getFallbackResponse(), businessConnectionId);
-      return;
-    }
-
-    // Отправляем сообщение в Backend Chat API
-    const adkResponse = await sendMessageToGateway(session, messageText);
-
-    let responseText: string;
-    if (adkResponse) {
-      responseText = adkResponse;
-      session.totalMessages++;
-    } else {
-      responseText = getFallbackResponse();
-    }
-
-    // Отправляем ответ с эмуляцией печати
-    await telegramService.sendMessageWithTyping(chatId, responseText, businessConnectionId);
-
-    mainLogger.info("Response sent", { userName, chatId, responseLength: responseText.length });
-
-    // Сохраняем сессии
-    saveUserSessions();
-  } catch (error: any) {
-    mainLogger.error("Critical error in main logic", {
-      message: error?.message,
-      stack: error?.stack,
-      chatId,
-      userName: msg.from?.first_name || "Unknown",
-    });
-
-    const fallbackResponse = getFallbackResponse();
-    await telegramService.sendMessage(chatId, fallbackResponse, businessConnectionId);
-  }
-});
-
-// Обработка обычных сообщений (не business)
-telegramService.onMessage(async (msg: Message) => {
-  if (!assistantEnabled || !msg.text) return;
-
-  const chatId = msg.chat.id;
-  const messageText = msg.text;
-  const userName = msg.from?.first_name || "user";
-
-  // Сохраняем сообщение в базу данных
-  await messageStorageService.saveIncomingMessage(msg, false);
-
-  mainLogger.info("Regular message received", {
-    userName,
-    chatId,
-    messageText: messageText.substring(0, 100) + (messageText.length > 100 ? "..." : ""),
-  });
-
-  try {
-    // Получаем или создаем сессию
-    const session = await getOrCreateUserSession(chatId, userName);
-    if (!session) {
-      await telegramService.sendMessage(chatId, getFallbackResponse());
-      return;
-    }
-
-    // Отправляем сообщение в Backend Chat API
-    const adkResponse = await sendMessageToGateway(session, messageText);
-
-    let responseText: string;
-    if (adkResponse) {
-      responseText = adkResponse;
-      session.totalMessages++;
-    } else {
-      responseText = getFallbackResponse();
-    }
-
-    // Эмуляция печати для обычных сообщений
-    await telegramService.simulateTyping(chatId, undefined, responseText);
-    await telegramService.sendMessage(chatId, responseText);
-
-    mainLogger.info("Response sent", { userName, chatId, responseLength: responseText.length });
-    saveUserSessions();
-  } catch (error: any) {
-    mainLogger.error("Error processing regular message", {
-      message: error?.message,
-      chatId,
-      userName,
-    });
-    await telegramService.sendMessage(chatId, getFallbackResponse());
-  }
-});
-
-// Команды управления
-telegramService.onCommand(/\/start/, (msg: Message) => {
-  const helpMessage = `
-🤖 **Telegram Assistant (Backend Chat API + History)**
-
-🔗 **Подключения:**
-- Backend Chat API
-- Telegram Business API
-- Анализ истории переписки
-
-📊 **Статус:** ${assistantEnabled ? "🟢 Активен" : "🔴 Неактивен"}
-👥 **Активных сессий:** ${userSessions.size}
-
-⚙️ **Основные команды:**
-/on - включить ассистента
-/off - выключить ассистента  
-/status - показать статус и статистику
-/sessions - информация о сессии
-
-🛠 **Управление данными:**
-/clear - очистить все сессии
-/save - принудительно сохранить сессии
-/migrate - мигрировать сессию в новый Chat API
-
-🔧 **Настройки окружения:**
-- Backend URL: ${backendBaseUrl}
-
-💡 **Возможности анализа истории:**
-- Автоматический поиск контактов (email, телефоны)
-- Выявление потенциальных лидов
-- Статистика по типам сообщений
-- Экспорт данных в CSV формат
-    `;
-
-  telegramService.sendMessage(msg.chat.id, helpMessage);
-});
-
-telegramService.onCommand(/\/sessions/, (msg: Message) => {
-  const chatId = msg.chat.id;
-  const userSession = userSessions.get(chatId);
-
-  if (!userSession) {
-    telegramService.sendMessage(chatId, "No active session found. Send any message to create one.");
-    return;
-  }
-
-  const sessionInfo = `
-Session Information:
-
-Name: ${userSession.userName}
-User ID: ${userSession.userId}
-Session ID: ${userSession.sessionId}
-Messages: ${userSession.totalMessages}
-Last activity: ${new Date(userSession.lastMessageTime).toLocaleString("en-US")}
-
-Backend URL: ${backendBaseUrl}
-  `;
-
-  telegramService.sendMessage(chatId, sessionInfo);
-});
-
-telegramService.onCommand(/\/save/, (msg: Message) => {
-  saveUserSessions();
-  telegramService.sendMessage(msg.chat.id, "Sessions force saved successfully.");
-});
-
-telegramService.onCommand(/\/on/, (msg: Message) => {
-  assistantEnabled = true;
-  telegramService.sendMessage(msg.chat.id, "AI assistant ENABLED. Ready to use Backend Chat API.");
-});
-
-telegramService.onCommand(/\/off/, (msg: Message) => {
-  assistantEnabled = false;
-  telegramService.sendMessage(msg.chat.id, "AI assistant DISABLED");
-});
-
-telegramService.onCommand(/\/status/, (msg: Message) => {
-  const status = assistantEnabled ? "ACTIVE" : "INACTIVE";
-  const activeSessions = userSessions.size;
-  const totalMessages = Array.from(userSessions.values()).reduce((sum, session) => sum + session.totalMessages, 0);
-
-  telegramService.sendMessage(
-    msg.chat.id,
-    `
-Telegram Assistant Status (Backend Chat API):
-
-State: ${status}
-Active sessions: ${activeSessions}
-Total messages: ${totalMessages}
-Backend URL: ${backendBaseUrl}
-Sessions file: ${SESSIONS_FILE}
-Started: ${new Date().toLocaleString("en-US")}
-
-Send any message to test functionality
-    `,
-  );
-});
-
-telegramService.onCommand(/\/clear/, (msg: Message) => {
-  const clearedCount = userSessions.size;
-  userSessions.clear();
-  saveUserSessions();
-  telegramService.sendMessage(msg.chat.id, `Cleared ${clearedCount} sessions`);
-});
-
-telegramService.onCommand(/\/migrate/, async (msg: Message) => {
-  const chatId = msg.chat.id;
-  const userSession = userSessions.get(chatId);
-  
-  if (!userSession) {
-    telegramService.sendMessage(chatId, "No active session found. Send any message to create one.");
-    return;
-  }
-
-  if (userSession.chatSessionId) {
-    telegramService.sendMessage(chatId, "Session already migrated to new Chat API.");
-    return;
-  }
-
-  try {
-    // Принудительно создаем chatSessionId для текущей сессии
-    const session = await getOrCreateUserSession(chatId, userSession.userName);
-    if (session && session.chatSessionId) {
-      telegramService.sendMessage(chatId, `Session migrated successfully! Chat Session ID: ${session.chatSessionId}`);
-    } else {
-      telegramService.sendMessage(chatId, "Failed to migrate session. Please try again.");
-    }
-  } catch (error: any) {
-    mainLogger.error("Migration error", { error: error.message, chatId });
-    telegramService.sendMessage(chatId, "Migration failed. Please try again later.");
-  }
-});
-
-// Удалены команды работы с историей - заменены на сохранение в БД
-
-// Обработчик завершения работы
-process.on('SIGINT', () => {
-  mainLogger.info("Telegram assistant shutting down...");
-  mainLogger.info("Saving sessions...");
-  saveUserSessions();
-  telegramService.stopPolling();
-  mainLogger.info("All data saved. Goodbye!");
-  process.exit(0);
-});
-
-// Обработчик ошибок
-process.on('uncaughtException', (error) => {
-  mainLogger.error("Uncaught Exception", { 
-    message: error.message, 
-    stack: error.stack 
+// Handle uncaught exceptions and unhandled rejections
+process.on("uncaughtException", error => {
+  mainLogger.error("Uncaught Exception", {
+    message: error.message,
+    stack: error.stack,
   });
   process.exit(1);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
-  mainLogger.error("Unhandled Rejection", { 
-    reason: reason, 
-    promise: promise 
+process.on("unhandledRejection", (reason, promise) => {
+  mainLogger.error("Unhandled Rejection", {
+    reason: reason,
+    promise: promise,
   });
 });
 
-// Инициализация приложения
-(async () => {
-  loadUserSessions();
-  mainLogger.info(`📱 Telegram assistant is ready! Loaded ${userSessions.size} user sessions`);
-})();
-
-// Периодическое сохранение сессий
-setInterval(() => {
-  saveUserSessions();
-}, 5 * 60 * 1000); // Каждые 5 минут
-
-// Периодическая очистка старых сессий
-setInterval(() => {
-  const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000; // 3 дня
-  let removedCount = 0;
-
-  for (const [chatId, session] of userSessions.entries()) {
-    if (session.lastMessageTime < threeDaysAgo) {
-      userSessions.delete(chatId);
-      removedCount++;
-    }
-  }
-
-  if (removedCount > 0) {
-    mainLogger.info("Session cleanup completed", {
-      removedCount,
-      activeCount: userSessions.size,
+// Start the application
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch(error => {
+    mainLogger.error("Application failed to start", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
     });
-    saveUserSessions();
-  }
-}, 60 * 60 * 1000); // Каждый час
+    process.exit(1);
+  });
+}
 
-loadUserSessions();
-
-// Graceful shutdown с сохранением сессий
-process.on("SIGINT", () => {
-  mainLogger.info("Telegram assistant (ADK) shutting down...");
-  mainLogger.info("Saving sessions...");
-  saveUserSessions();
-  telegramService.stopPolling();
-  mainLogger.info("All data saved. Goodbye!");
-  process.exit(0);
-});
+export { TelegramApp };
