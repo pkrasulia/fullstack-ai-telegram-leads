@@ -132,15 +132,14 @@ services:
     container_name: telegram-client
     restart: unless-stopped
     env_file:
-      - .env.shared
       - .env.telegram
+    environment:
+      - NODE_ENV=development
     volumes:
       - ./telegram-client/src:/usr/src/app/src
     command: npm run start:dev
     depends_on:
       backend:
-        condition: service_healthy
-      agent:
         condition: service_healthy
     networks:
       - app-network

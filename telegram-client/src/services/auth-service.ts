@@ -77,5 +77,3 @@ export async function makeAuthenticatedRequest<T = any>(method: Method, url: str
     throw error;
   }
 }
-
-
