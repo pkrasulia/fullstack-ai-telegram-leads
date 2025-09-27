@@ -260,4 +260,4 @@ media/
 *.zip
 *.rar
 .cache/
-.parcel-cache/
+.parcel-cache/.github/
