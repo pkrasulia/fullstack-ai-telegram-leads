@@ -15,9 +15,11 @@ export class AiGatewayService {
 
   constructor(private configService: ConfigService) {
     this.adkBaseUrl =
-      this.configService.get<string>('ADK_BASE_URL') || 'http://agent:8000';
+      this.configService.get<string>('ADK_BASE_URL', { infer: true }) ||
+      'http://agent:8000';
     this.appName =
-      this.configService.get<string>('ADK_APP_NAME') || 'telegram-assistant';
+      this.configService.get<string>('ADK_APP_NAME', { infer: true }) ||
+      'telegram-assistant';
 
     this.adkClient = axios.create({
       baseURL: this.adkBaseUrl,
