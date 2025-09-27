@@ -23,7 +23,8 @@ from .shared_libraries.callbacks import (
     rate_limit_callback,
     before_agent,
     before_tool,
-    after_tool
+    after_tool,
+    model_error_callback
 )
 
 logger = logging.getLogger(__name__)
@@ -42,5 +43,6 @@ root_agent = Agent(
     after_tool_callback=after_tool,
     before_agent_callback=before_agent,
     before_model_callback=rate_limit_callback,
+    error_callback=model_error_callback,
 )
 
