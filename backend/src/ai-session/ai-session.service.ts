@@ -33,6 +33,7 @@ export class AiSessionService {
         title: createAiSessionDto.title.trim(),
         adkSessionId: newSessionId,
         userId: createAiSessionDto.user_id,
+        userName: createAiSessionDto.user_name,
       });
 
       // Сохраняем и возвращаем готовую сущность

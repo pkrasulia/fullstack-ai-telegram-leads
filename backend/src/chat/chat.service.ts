@@ -38,6 +38,7 @@ export class ChatService {
     return this.aiSessionService.create({
       title: createSessionDto.title,
       user_id: createSessionDto.userId,
+      user_name: createSessionDto.userName,
     });
   }
 

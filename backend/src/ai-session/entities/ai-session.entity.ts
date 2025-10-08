@@ -20,6 +20,9 @@ export class AiSessionEntity {
   @Column({ name: 'user_id' })
   userId: string;
 
+  @Column({ name: 'user_name', nullable: true })
+  userName: string;
+
   @Column({ name: 'adk_session_id' })
   adkSessionId: string;
 

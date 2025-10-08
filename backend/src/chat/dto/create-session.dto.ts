@@ -1,3 +1,4 @@
+import { Optional } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
@@ -11,6 +12,11 @@ export class CreateSessionDto {
   @IsNotEmpty()
   @IsString()
   userId: string;
+
+  @ApiProperty({ description: 'Имя пользователя' })
+  @Optional()
+  @IsString()
+  userName: string;
 
   @ApiProperty({ description: 'Дополнительные метаданные', required: false })
   @IsOptional()
