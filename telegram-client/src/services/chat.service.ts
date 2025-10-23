@@ -39,6 +39,7 @@ export class ChatService extends BaseService {
         const payload = {
           title,
           userId,
+          userName: (metadata as any)?.userName,
           metadata: {
             source: "telegram",
             ...metadata,
@@ -203,5 +204,89 @@ export class ChatService extends BaseService {
       this.logError("Health check failed", error);
       return false;
     }
+  }
+
+  // ===== SIMPLIFIED SESSION MANAGEMENT =====
+
+  /**
+   * Gets or creates a chat session for a user
+   * @param chatId - Chat ID
+   * @param userName - User name
+   * @returns Chat session or null
+   */
+  async getOrCreateUserSession(chatId: number, userName: string): Promise<ChatSession | null> {
+    try {
+      this.validateRequired({ chatId, userName }, ["chatId", "userName"]);
+
+      const userId = `tg_user_${chatId}`;
+
+      // Try to find an existing backend chat session for this user
+      const existingSessions = await this.getUserSessions(userId);
+      if (existingSessions && existingSessions.length > 0) {
+        this.logInfo("Found existing chat session", {
+          chatId,
+          userId,
+          sessionId: existingSessions[0].id,
+        });
+        return existingSessions[0];
+      }
+
+      // Create new session if none exists
+      const metadata: SessionMetadata = {
+        source: "telegram",
+        chatId: chatId.toString(),
+        userName,
+      };
+
+      const createdSession = await this.createSession(userId, `Telegram Chat with ${userName}`, metadata);
+      if (createdSession) {
+        this.logInfo("Created new chat session", {
+          chatId,
+          userId,
+          sessionId: createdSession.id,
+        });
+        return createdSession;
+      }
+
+      this.logError("Failed to create chat session", new Error("Backend session creation failed"), {
+        chatId,
+        userId,
+      });
+      return null;
+    } catch (error) {
+      this.logError("Failed to get or create user session", error, { chatId, userName });
+      return null;
+    }
+  }
+
+  /**
+   * Gets session statistics (simplified - no local cache)
+   * @returns Session statistics
+   */
+  getSessionStatistics(): Record<string, any> {
+    return {
+      totalSessions: 0, // No local cache
+      activeSessions: 0, // No local cache
+      totalMessages: 0, // No local cache
+      averageMessagesPerSession: 0, // No local cache
+    };
+  }
+
+  /**
+   * Cleans up old sessions (no-op since we don't have local cache)
+   * @returns Number of cleaned sessions
+   */
+  cleanupOldSessions(): number {
+    this.logInfo("No local sessions to clean up - using backend storage");
+    return 0;
+  }
+
+  /**
+   * Clears all sessions (no-op since we don't have local cache)
+   * @returns Number of cleared sessions
+   */
+  clearAllSessions(): number {
+    this.logInfo("No local sessions to clear - using backend storage");
+    return 0;
   }
 }

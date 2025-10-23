@@ -19,7 +19,6 @@ export interface TelegramConfig {
   serviceAccountPassword: string;
 
   // Session Management
-  sessionsFile: string;
   sessionCleanupIntervalHours: number;
   sessionExpiryDays: number;
   sessionSaveIntervalMinutes: number;
@@ -52,7 +51,6 @@ const DEFAULT_CONFIG: TelegramConfig = {
   backendUrl: "http://backend:4343",
   serviceAccountLogin: "service@example.com",
   serviceAccountPassword: "secret",
-  sessionsFile: "user_sessions.json",
   sessionCleanupIntervalHours: 1,
   sessionExpiryDays: 3,
   sessionSaveIntervalMinutes: 5,
@@ -80,7 +78,6 @@ export function loadTelegramConfig(): TelegramConfig {
     backendUrl: process.env.BACKEND_URL || DEFAULT_CONFIG.backendUrl,
     serviceAccountLogin: process.env.SERVICE_ACCOUNT_LOGIN || DEFAULT_CONFIG.serviceAccountLogin,
     serviceAccountPassword: process.env.SERVICE_ACCOUNT_PASSWORD || DEFAULT_CONFIG.serviceAccountPassword,
-    sessionsFile: process.env.SESSIONS_FILE || DEFAULT_CONFIG.sessionsFile,
     sessionCleanupIntervalHours: parseInt(process.env.SESSION_CLEANUP_INTERVAL_HOURS || DEFAULT_CONFIG.sessionCleanupIntervalHours.toString()),
     sessionExpiryDays: parseInt(process.env.SESSION_EXPIRY_DAYS || DEFAULT_CONFIG.sessionExpiryDays.toString()),
     sessionSaveIntervalMinutes: parseInt(process.env.SESSION_SAVE_INTERVAL_MINUTES || DEFAULT_CONFIG.sessionSaveIntervalMinutes.toString()),

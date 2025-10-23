@@ -1,7 +1,7 @@
 import { Message } from "node-telegram-bot-api";
 import { telegramConfig } from "../config/telegram.config";
 import { mainLogger } from "./logs/logger";
-import { TelegramService, GatewayService, MessageStorageService } from "../services";
+import { TelegramService, MessageStorageService, ChatService, AuthService } from "../services";
 import { BusinessConnection, BusinessMessage } from "../shared/types";
 import { getTextPreview, isCommand, formatUserName } from "../shared/utils";
 
@@ -10,14 +10,16 @@ import { getTextPreview, isCommand, formatUserName } from "../shared/utils";
  */
 export class TelegramApp {
   private readonly telegramService: TelegramService;
-  private readonly gatewayService: GatewayService;
   private readonly messageStorageService: MessageStorageService;
+  private readonly authService: AuthService;
+  private readonly chatService: ChatService;
   private assistantEnabled: boolean;
 
   constructor() {
     this.telegramService = new TelegramService();
-    this.gatewayService = new GatewayService();
     this.messageStorageService = new MessageStorageService();
+    this.authService = new AuthService();
+    this.chatService = new ChatService(this.authService);
     this.assistantEnabled = telegramConfig.assistantEnabledByDefault;
 
     this.setupEventHandlers();
@@ -101,18 +103,10 @@ export class TelegramApp {
    * Sets up periodic tasks
    */
   private setupPeriodicTasks(): void {
-    // Periodic session saving
-    setInterval(
-      () => {
-        this.gatewayService.saveUserSessions();
-      },
-      telegramConfig.sessionSaveIntervalMinutes * 60 * 1000,
-    );
-
     // Periodic session cleanup
     setInterval(
       () => {
-        const cleanedCount = this.gatewayService.cleanupOldSessions();
+        const cleanedCount = this.chatService.cleanupOldSessions();
         if (cleanedCount > 0) {
           mainLogger.info("Periodic session cleanup completed", { cleanedCount });
         }
@@ -214,21 +208,25 @@ export class TelegramApp {
    */
   private async processMessage(chatId: number, messageText: string, userName: string, businessConnectionId?: string): Promise<void> {
     try {
-      // Get or create user session
-      const session = await this.gatewayService.getOrCreateUserSession(chatId, userName);
+      // Get or create chat session
+      const session = await this.chatService.getOrCreateUserSession(chatId, userName);
       if (!session) {
-        mainLogger.error("Failed to get user session", { chatId, userName });
+        mainLogger.error("Failed to get chat session", { chatId, userName });
         await this.sendFallbackResponse(chatId, businessConnectionId);
         return;
       }
 
-      // Send message to AI gateway
-      const aiResponse = await this.gatewayService.sendMessageToGateway(session, messageText);
+      // Send message to chat service
+      const response = await this.chatService.sendMessage(session.id, messageText, {
+        source: "telegram",
+        chatId: chatId.toString(),
+        userName,
+        businessConnectionId,
+      });
 
       let responseText: string;
-      if (aiResponse) {
-        responseText = aiResponse;
-        this.gatewayService.updateSessionMessageCount(chatId);
+      if (response && response.aiResponse) {
+        responseText = response.aiResponse.message.text;
       } else {
         responseText = this.getFallbackResponse();
       }
@@ -292,20 +290,16 @@ export class TelegramApp {
    * @param msg - Message object
    */
   private handleStatusCommand(msg: Message): void {
-    const stats = this.gatewayService.getSessionStatistics();
     const status = this.assistantEnabled ? "ACTIVE" : "INACTIVE";
 
     const statusMessage = `
 🤖 **Telegram Assistant Status**
 
 **State:** ${status}
-**Active Sessions:** ${stats.activeSessions}
-**Total Sessions:** ${stats.totalSessions}
-**Total Messages:** ${stats.totalMessages}
 **Backend URL:** ${telegramConfig.backendBaseUrl}
-**Sessions File:** ${telegramConfig.sessionsFile}
 **Started:** ${new Date().toLocaleString("en-US")}
 
+**Note:** All sessions are managed on the backend
 Send any message to test functionality
     `;
 
@@ -316,29 +310,34 @@ Send any message to test functionality
    * Handles sessions command
    * @param msg - Message object
    */
-  private handleSessionsCommand(msg: Message): void {
+  private async handleSessionsCommand(msg: Message): Promise<void> {
     const chatId = msg.chat.id;
-    const session = this.gatewayService.getAllUserSessions().get(chatId);
+    
+    try {
+      const session = await this.chatService.getOrCreateUserSession(chatId, "User");
 
-    if (!session) {
-      this.telegramService.sendMessage(chatId, "No active session found. Send any message to create one.");
-      return;
-    }
+      if (!session) {
+        this.telegramService.sendMessage(chatId, "No active session found. Send any message to create one.");
+        return;
+      }
 
-    const sessionInfo = `
+      const sessionInfo = `
 📊 **Session Information**
 
-**Name:** ${session.userName}
+**Title:** ${session.title}
 **User ID:** ${session.userId}
-**Session ID:** ${session.sessionId}
-**Chat Session ID:** ${session.chatSessionId || "Not created"}
-**Messages:** ${session.totalMessages}
-**Last Activity:** ${new Date(session.lastMessageTime).toLocaleString("en-US")}
+**Session ID:** ${session.id}
+**Created:** ${new Date(session.createdAt).toLocaleString("en-US")}
+**Updated:** ${new Date(session.updatedAt).toLocaleString("en-US")}
 
 **Backend URL:** ${telegramConfig.backendBaseUrl}
-    `;
+      `;
 
-    this.telegramService.sendMessage(chatId, sessionInfo);
+      this.telegramService.sendMessage(chatId, sessionInfo);
+    } catch (error) {
+      mainLogger.error("Error getting session info", error);
+      this.telegramService.sendMessage(chatId, "Error getting session information. Please try again.");
+    }
   }
 
   /**
@@ -364,8 +363,8 @@ Send any message to test functionality
    * @param msg - Message object
    */
   private handleSaveCommand(msg: Message): void {
-    this.gatewayService.saveUserSessions();
-    this.telegramService.sendMessage(msg.chat.id, "💾 Sessions force saved successfully.");
+    // Sessions are now managed on the backend, no need to save locally
+    this.telegramService.sendMessage(msg.chat.id, "💾 Sessions are automatically managed on the backend.");
   }
 
   /**
@@ -373,8 +372,8 @@ Send any message to test functionality
    * @param msg - Message object
    */
   private handleClearCommand(msg: Message): void {
-    const clearedCount = this.gatewayService.clearAllSessions();
-    this.telegramService.sendMessage(msg.chat.id, `🗑️ Cleared ${clearedCount} sessions`);
+    // No local sessions to clear - everything is on backend
+    this.telegramService.sendMessage(msg.chat.id, "🗑️ No local sessions to clear - all data is stored on the backend");
   }
 
   /**
@@ -383,24 +382,14 @@ Send any message to test functionality
    */
   private async handleMigrateCommand(msg: Message): Promise<void> {
     const chatId = msg.chat.id;
-    const session = this.gatewayService.getAllUserSessions().get(chatId);
-
-    if (!session) {
-      this.telegramService.sendMessage(chatId, "No active session found. Send any message to create one.");
-      return;
-    }
-
-    if (session.chatSessionId) {
-      this.telegramService.sendMessage(chatId, "Session already migrated to new Chat API.");
-      return;
-    }
-
+    
     try {
-      const newSession = await this.gatewayService.getOrCreateUserSession(chatId, session.userName);
-      if (newSession && newSession.chatSessionId) {
-        this.telegramService.sendMessage(chatId, `✅ Session migrated successfully! Chat Session ID: ${newSession.chatSessionId}`);
+      const session = await this.chatService.getOrCreateUserSession(chatId, "User");
+      
+      if (session) {
+        this.telegramService.sendMessage(chatId, `✅ Session is already using the Chat API! Session ID: ${session.id}`);
       } else {
-        this.telegramService.sendMessage(chatId, "❌ Failed to migrate session. Please try again.");
+        this.telegramService.sendMessage(chatId, "❌ Failed to get or create session. Please try again.");
       }
     } catch (error) {
       mainLogger.error("Migration error", {
@@ -416,38 +405,33 @@ Send any message to test functionality
    * @returns Help message text
    */
   private getHelpMessage(): string {
-    const stats = this.gatewayService.getSessionStatistics();
-
     return `
-🤖 **Telegram Assistant (Backend Chat API + History)**
+🤖 **Telegram Assistant (Backend Chat API)**
 
 🔗 **Connections:**
 - Backend Chat API
 - Telegram Business API
-- Message history analysis
 
 📊 **Status:** ${this.assistantEnabled ? "🟢 Active" : "🔴 Inactive"}
-👥 **Active Sessions:** ${stats.activeSessions}
 
 ⚙️ **Main Commands:**
 /on - enable assistant
 /off - disable assistant  
-/status - show status and statistics
+/status - show status
 /sessions - session information
 
 🛠 **Data Management:**
-/clear - clear all sessions
-/save - force save sessions
-/migrate - migrate session to new Chat API
+/clear - clear local cache (no-op)
+/save - force save (no-op)
+/migrate - check session status
 
 🔧 **Environment Settings:**
 - Backend URL: ${telegramConfig.backendBaseUrl}
 
-💡 **History Analysis Features:**
-- Automatic contact detection (emails, phones)
-- Lead identification
-- Message type statistics
-- CSV data export
+💡 **Features:**
+- All data stored on backend
+- No local caching
+- Simple and reliable
     `;
   }
 
@@ -457,8 +441,7 @@ Send any message to test functionality
    */
   private async shutdown(signal: string): Promise<void> {
     mainLogger.info(`Telegram assistant shutting down (${signal})...`);
-    mainLogger.info("Saving sessions...");
-    this.gatewayService.saveUserSessions();
+    mainLogger.info("Sessions are managed on the backend, no local saving needed.");
     this.telegramService.stopPolling();
     mainLogger.info("All data saved. Goodbye!");
     process.exit(0);
@@ -474,11 +457,8 @@ Send any message to test functionality
       mainLogger.info(`- Telegram Bot Token: ${telegramConfig.botToken.length > 10 ? "Configured" : "Missing"}`);
       mainLogger.info(`- Backend Base URL: ${telegramConfig.backendBaseUrl}`);
 
-      // Load existing sessions
-      this.gatewayService.loadUserSessions();
-
-      const stats = this.gatewayService.getSessionStatistics();
-      mainLogger.info(`📱 Telegram assistant is ready! Loaded ${stats.totalSessions} user sessions`);
+      // All sessions are managed on the backend
+      mainLogger.info(`📱 Telegram assistant is ready! All sessions are managed on the backend`);
     } catch (error) {
       mainLogger.error("Failed to start Telegram assistant", {
         message: error instanceof Error ? error.message : String(error),
