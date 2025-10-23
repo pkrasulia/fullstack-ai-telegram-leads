@@ -97,6 +97,7 @@ export class ChatService {
       const aiResult = await this.aiGatewayService.create({
         text: sendMessageDto.text,
         userId: session.userId,
+        userName: session.userName,
         sessionId: session.adkSessionId,
       });
 

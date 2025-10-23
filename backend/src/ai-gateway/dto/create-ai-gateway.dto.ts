@@ -16,6 +16,10 @@ export class CreateAiGatewayDto {
   @IsString()
   userId?: string;
 
+  @IsOptional()
+  @IsString()
+  userName: string;
+
   @ApiProperty({ description: 'ID сессии (опционально)', required: false })
   @IsOptional()
   @IsString()

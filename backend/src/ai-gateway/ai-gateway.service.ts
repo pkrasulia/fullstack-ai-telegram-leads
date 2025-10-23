@@ -58,6 +58,7 @@ export class AiGatewayService {
       const response = await this.sendMessageToAdk(
         createAiGatewayDto.text,
         createAiGatewayDto.userId,
+        createAiGatewayDto.userName,
         createAiGatewayDto.sessionId,
       );
 
@@ -108,6 +109,7 @@ export class AiGatewayService {
   private async sendMessageToAdk(
     message: string,
     userId?: string,
+    userName?: string,
     sessionId?: string,
   ): Promise<string> {
     try {
@@ -148,6 +150,7 @@ export class AiGatewayService {
       const payload = {
         appName: this.appName,
         userId: targetUserId,
+        userName: userName,
         sessionId: targetSessionId,
         newMessage: {
           role: 'user',
