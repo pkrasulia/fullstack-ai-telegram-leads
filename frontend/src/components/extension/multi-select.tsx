@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { Badge } from "@/components/ui/badge";
+import { Badge } from '@/components/ui/badge';
 import {
   Command,
   CommandItem,
   CommandEmpty,
   CommandList,
-} from "@/components/ui/command";
-import { cn } from "@/lib/utils";
-import { Command as CommandPrimitive } from "cmdk";
-import { X as RemoveIcon, Check } from "lucide-react";
+} from '@/components/ui/command';
+import { cn } from '@/lib/utils';
+import { Command as CommandPrimitive } from 'cmdk';
+import { X as RemoveIcon, Check } from 'lucide-react';
 import React, {
   KeyboardEvent,
   createContext,
@@ -17,7 +17,7 @@ import React, {
   useCallback,
   useContext,
   useState,
-} from "react";
+} from 'react';
 
 type MultiSelectorProps = {
   values: string[];
@@ -41,7 +41,7 @@ const MultiSelectContext = createContext<MultiSelectContextProps | null>(null);
 const useMultiSelect = () => {
   const context = useContext(MultiSelectContext);
   if (!context) {
-    throw new Error("useMultiSelect must be used within MultiSelectProvider");
+    throw new Error('useMultiSelect must be used within MultiSelectProvider');
   }
   return context;
 };
@@ -55,7 +55,7 @@ const MultiSelector = ({
   dir,
   ...props
 }: MultiSelectorProps) => {
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState('');
   const [open, setOpen] = useState<boolean>(false);
   const [activeIndex, setActiveIndex] = useState<number>(-1);
 
@@ -67,7 +67,7 @@ const MultiSelector = ({
         onValueChange([...value, val]);
       }
     },
-    [value]
+    [value],
   );
 
   // TODO : change from else if use to switch case statement
@@ -77,7 +77,7 @@ const MultiSelector = ({
       const moveNext = () => {
         const nextIndex = activeIndex + 1;
         setActiveIndex(
-          nextIndex > value.length - 1 ? (loop ? 0 : -1) : nextIndex
+          nextIndex > value.length - 1 ? (loop ? 0 : -1) : nextIndex,
         );
       };
 
@@ -86,7 +86,7 @@ const MultiSelector = ({
         setActiveIndex(prevIndex < 0 ? value.length - 1 : prevIndex);
       };
 
-      if ((e.key === "Backspace" || e.key === "Delete") && value.length > 0) {
+      if ((e.key === 'Backspace' || e.key === 'Delete') && value.length > 0) {
         if (inputValue.length === 0) {
           if (activeIndex !== -1 && activeIndex < value.length) {
             onValueChange(value.filter((item) => item !== value[activeIndex]));
@@ -94,33 +94,33 @@ const MultiSelector = ({
             setActiveIndex(newIndex);
           } else {
             onValueChange(
-              value.filter((item) => item !== value[value.length - 1])
+              value.filter((item) => item !== value[value.length - 1]),
             );
           }
         }
-      } else if (e.key === "Enter") {
+      } else if (e.key === 'Enter') {
         setOpen(true);
-      } else if (e.key === "Escape") {
+      } else if (e.key === 'Escape') {
         if (activeIndex !== -1) {
           setActiveIndex(-1);
         } else {
           setOpen(false);
         }
-      } else if (dir === "rtl") {
-        if (e.key === "ArrowRight") {
+      } else if (dir === 'rtl') {
+        if (e.key === 'ArrowRight') {
           movePrev();
-        } else if (e.key === "ArrowLeft" && (activeIndex !== -1 || loop)) {
+        } else if (e.key === 'ArrowLeft' && (activeIndex !== -1 || loop)) {
           moveNext();
         }
       } else {
-        if (e.key === "ArrowLeft") {
+        if (e.key === 'ArrowLeft') {
           movePrev();
-        } else if (e.key === "ArrowRight" && (activeIndex !== -1 || loop)) {
+        } else if (e.key === 'ArrowRight' && (activeIndex !== -1 || loop)) {
           moveNext();
         }
       }
     },
-    [value, inputValue, activeIndex, loop]
+    [value, inputValue, activeIndex, loop],
   );
 
   return (
@@ -139,8 +139,8 @@ const MultiSelector = ({
       <Command
         onKeyDown={handleKeyDown}
         className={cn(
-          "overflow-visible bg-transparent flex flex-col space-y-2",
-          className
+          'overflow-visible bg-transparent flex flex-col space-y-2',
+          className,
         )}
         dir={dir}
         {...props}
@@ -166,8 +166,8 @@ const MultiSelectorTrigger = forwardRef<
     <div
       ref={ref}
       className={cn(
-        "flex flex-wrap gap-1 p-1 py-2 border border-muted rounded-lg bg-background",
-        className
+        'flex flex-wrap gap-1 p-1 py-2 border border-muted rounded-lg bg-background',
+        className,
       )}
       {...props}
     >
@@ -175,10 +175,10 @@ const MultiSelectorTrigger = forwardRef<
         <Badge
           key={item}
           className={cn(
-            "px-1 rounded-xl flex items-center gap-1",
-            activeIndex === index && "ring-2 ring-muted-foreground "
+            'px-1 rounded-xl flex items-center gap-1',
+            activeIndex === index && 'ring-2 ring-muted-foreground ',
           )}
-          variant={"secondary"}
+          variant={'secondary'}
         >
           <span className="text-xs">{item}</span>
           <button
@@ -198,7 +198,7 @@ const MultiSelectorTrigger = forwardRef<
   );
 });
 
-MultiSelectorTrigger.displayName = "MultiSelectorTrigger";
+MultiSelectorTrigger.displayName = 'MultiSelectorTrigger';
 
 const MultiSelectorInput = forwardRef<
   React.ElementRef<typeof CommandPrimitive.Input>,
@@ -216,15 +216,15 @@ const MultiSelectorInput = forwardRef<
       onFocus={() => setOpen(true)}
       onClick={() => setActiveIndex(-1)}
       className={cn(
-        "ml-2 bg-transparent outline-none placeholder:text-muted-foreground flex-1",
+        'ml-2 bg-transparent outline-none placeholder:text-muted-foreground flex-1',
         className,
-        activeIndex !== -1 && "caret-transparent"
+        activeIndex !== -1 && 'caret-transparent',
       )}
     />
   );
 });
 
-MultiSelectorInput.displayName = "MultiSelectorInput";
+MultiSelectorInput.displayName = 'MultiSelectorInput';
 
 const MultiSelectorContent = forwardRef<
   HTMLDivElement,
@@ -238,7 +238,7 @@ const MultiSelectorContent = forwardRef<
   );
 });
 
-MultiSelectorContent.displayName = "MultiSelectorContent";
+MultiSelectorContent.displayName = 'MultiSelectorContent';
 
 const MultiSelectorList = forwardRef<
   React.ElementRef<typeof CommandPrimitive.List>,
@@ -248,8 +248,8 @@ const MultiSelectorList = forwardRef<
     <CommandList
       ref={ref}
       className={cn(
-        "p-2 flex flex-col gap-2 rounded-md scrollbar-thin scrollbar-track-transparent transition-colors scrollbar-thumb-muted-foreground dark:scrollbar-thumb-muted scrollbar-thumb-rounded-lg w-full absolute bg-background shadow-md z-10 border border-muted top-0",
-        className
+        'p-2 flex flex-col gap-2 rounded-md scrollbar-thin scrollbar-track-transparent transition-colors scrollbar-thumb-muted-foreground dark:scrollbar-thumb-muted scrollbar-thumb-rounded-lg w-full absolute bg-background shadow-md z-10 border border-muted top-0',
+        className,
       )}
     >
       {children}
@@ -260,7 +260,7 @@ const MultiSelectorList = forwardRef<
   );
 });
 
-MultiSelectorList.displayName = "MultiSelectorList";
+MultiSelectorList.displayName = 'MultiSelectorList';
 
 const MultiSelectorItem = forwardRef<
   React.ElementRef<typeof CommandPrimitive.Item>,
@@ -282,13 +282,13 @@ const MultiSelectorItem = forwardRef<
       {...props}
       onSelect={() => {
         onValueChange(value);
-        setInputValue("");
+        setInputValue('');
       }}
       className={cn(
-        "rounded-md cursor-pointer px-2 py-1 transition-colors flex justify-between ",
+        'rounded-md cursor-pointer px-2 py-1 transition-colors flex justify-between ',
         className,
-        isIncluded && "opacity-50 cursor-default",
-        props.disabled && "opacity-50 cursor-not-allowed"
+        isIncluded && 'opacity-50 cursor-default',
+        props.disabled && 'opacity-50 cursor-not-allowed',
       )}
       onMouseDown={mousePreventDefault}
     >
@@ -298,7 +298,7 @@ const MultiSelectorItem = forwardRef<
   );
 });
 
-MultiSelectorItem.displayName = "MultiSelectorItem";
+MultiSelectorItem.displayName = 'MultiSelectorItem';
 
 export {
   MultiSelector,

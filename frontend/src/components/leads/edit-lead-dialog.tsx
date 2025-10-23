@@ -31,7 +31,12 @@ interface EditLeadDialogProps {
   onLeadUpdated: (updatedLead: Lead) => void;
 }
 
-export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: EditLeadDialogProps) {
+export function EditLeadDialog({
+  lead,
+  open,
+  onOpenChange,
+  onLeadUpdated,
+}: EditLeadDialogProps) {
   const [formData, setFormData] = useState({
     name: lead?.name || '',
     email: lead?.email || '',
@@ -44,7 +49,7 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
     status: lead?.status || LeadStatus.NEW,
     source: lead?.source || LeadSource.TELEGRAM,
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const patchLeadService = usePatchLeadService();
 
@@ -67,27 +72,27 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
   }, [lead]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!lead) return;
-    
+
     if (!formData.name.trim()) {
       toast.error('Ошибка валидации', {
-        description: 'Имя лида обязательно для заполнения'
+        description: 'Имя лида обязательно для заполнения',
       });
       return;
     }
 
     try {
       setIsLoading(true);
-      
+
       const response = await patchLeadService({
         id: lead.id,
         data: {
@@ -101,7 +106,7 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
           notes: formData.notes.trim() || undefined,
           status: formData.status,
           source: formData.source,
-        }
+        },
       });
 
       // Handle different response structures
@@ -128,15 +133,14 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
 
       onLeadUpdated(updatedLead);
       onOpenChange(false);
-      
+
       toast.success('Лид обновлен', {
-        description: `Информация о ${formData.name} успешно сохранена`
+        description: `Информация о ${formData.name} успешно сохранена`,
       });
-      
     } catch (error) {
       console.error('Error updating lead:', error);
       toast.error('Ошибка сохранения', {
-        description: 'Не удалось сохранить изменения'
+        description: 'Не удалось сохранить изменения',
       });
     } finally {
       setIsLoading(false);
@@ -148,7 +152,7 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
     [LeadStatus.CONTACTED]: 'Контакт',
     [LeadStatus.QUALIFIED]: 'Квалифицирован',
     [LeadStatus.CONVERTED]: 'Конверсия',
-    [LeadStatus.LOST]: 'Потерян'
+    [LeadStatus.LOST]: 'Потерян',
   };
 
   const sourceLabels = {
@@ -156,7 +160,7 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
     [LeadSource.WEBSITE]: 'Сайт',
     [LeadSource.REFERRAL]: 'Реферал',
     [LeadSource.SOCIAL_MEDIA]: 'Соц. сети',
-    [LeadSource.OTHER]: 'Другое'
+    [LeadSource.OTHER]: 'Другое',
   };
 
   return (
@@ -168,7 +172,7 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
             Измените информацию о лиде и нажмите "Сохранить"
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -181,7 +185,7 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -204,13 +208,15 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
                 placeholder="+7 999 123 45 67"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="telegramUsername">Telegram Username</Label>
               <Input
                 id="telegramUsername"
                 value={formData.telegramUsername}
-                onChange={(e) => handleInputChange('telegramUsername', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange('telegramUsername', e.target.value)
+                }
                 placeholder="@username"
               />
             </div>
@@ -226,7 +232,7 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
                 placeholder="Название компании"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="position">Должность</Label>
               <Input
@@ -241,7 +247,10 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="status">Статус</Label>
-              <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => handleInputChange('status', value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Выберите статус" />
                 </SelectTrigger>
@@ -254,10 +263,13 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="source">Источник</Label>
-              <Select value={formData.source} onValueChange={(value) => handleInputChange('source', value)}>
+              <Select
+                value={formData.source}
+                onValueChange={(value) => handleInputChange('source', value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Выберите источник" />
                 </SelectTrigger>

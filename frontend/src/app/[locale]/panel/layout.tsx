@@ -2,11 +2,7 @@
 import React, { ReactNode, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import {
-  Users,
-  Triangle,
-  LogOut,
-} from 'lucide-react';
+import { Users, Triangle, LogOut } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -70,9 +66,7 @@ function PanelLayout({ children }: PanelLayoutProps) {
   };
 
   const activeLink = useMemo(() => {
-    const links = [
-      '/panel/leads',
-    ];
+    const links = ['/panel/leads'];
     return links.find((link) => pathname.includes(link)) || null;
   }, [pathname]);
 
@@ -105,8 +99,7 @@ function PanelLayout({ children }: PanelLayoutProps) {
             </Tooltip>
           </TooltipProvider>
         </nav>
-        <nav className="mt-auto grid gap-1 p-2">
-        </nav>
+        <nav className="mt-auto grid gap-1 p-2"></nav>
       </aside>
       <div className="flex flex-col">
         <header className="sticky top-0 z-10 flex h-[57px] items-center gap-1 border-b bg-background px-4">
@@ -127,9 +120,7 @@ function PanelLayout({ children }: PanelLayoutProps) {
             <ColorThemeSwitcher />
           </div>
         </header>
-        <main className="grid flex-1 gap-4 overflow-auto p-4">
-          {children}
-        </main>
+        <main className="grid flex-1 gap-4 overflow-auto p-4">{children}</main>
       </div>
     </div>
   );

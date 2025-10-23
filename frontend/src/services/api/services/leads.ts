@@ -67,7 +67,16 @@ export function useGetLeadService() {
 
 export type LeadPostRequest = Pick<
   Lead,
-  'name' | 'email' | 'phone' | 'telegramUsername' | 'telegramId' | 'company' | 'position' | 'notes' | 'status' | 'source'
+  | 'name'
+  | 'email'
+  | 'phone'
+  | 'telegramUsername'
+  | 'telegramId'
+  | 'company'
+  | 'position'
+  | 'notes'
+  | 'status'
+  | 'source'
 >;
 
 export type LeadPostResponse = Lead;
@@ -90,7 +99,19 @@ export function usePostLeadService() {
 export type LeadPatchRequest = {
   id: Lead['id'];
   data: Partial<
-    Pick<Lead, 'name' | 'email' | 'phone' | 'telegramUsername' | 'telegramId' | 'company' | 'position' | 'notes' | 'status' | 'source'>
+    Pick<
+      Lead,
+      | 'name'
+      | 'email'
+      | 'phone'
+      | 'telegramUsername'
+      | 'telegramId'
+      | 'company'
+      | 'position'
+      | 'notes'
+      | 'status'
+      | 'source'
+    >
   >;
 };
 
