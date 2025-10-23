@@ -12,25 +12,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.§
 
-"""Agent module for the telegram customer service agent."""
+"""Agent module for the telegram customer service agent.
+
+Простой и элегантный подход:
+- Один агент для всех пользователей
+- Данные пользователя передаются в промпт через before_agent callback
+- Автоматическая персонализация без создания новых агентов
+
+Использование:
+```python
+from telegram_assistant.agent import root_agent
+
+# Просто используйте root_agent - данные пользователя добавятся автоматически
+agent = root_agent
+```
+"""
 
 import logging
 from google.adk import Agent
 from .config import Config
 from .prompts import GLOBAL_INSTRUCTION, INSTRUCTION
-from .tools.tools import send_lead_to_backend
+from .tools.tools import get_session_data, send_lead_to_backend
 from .shared_libraries.callbacks import (
     rate_limit_callback,
     before_agent,
     before_tool,
     after_tool,
-    model_error_callback
 )
 
 logger = logging.getLogger(__name__)
 
 configs = Config()
 
+# Единственный агент - простой и элегантный
 root_agent = Agent(
     model=configs.agent_settings.model,
     global_instruction=GLOBAL_INSTRUCTION,
@@ -43,6 +57,5 @@ root_agent = Agent(
     after_tool_callback=after_tool,
     before_agent_callback=before_agent,
     before_model_callback=rate_limit_callback,
-    error_callback=model_error_callback,
 )
 

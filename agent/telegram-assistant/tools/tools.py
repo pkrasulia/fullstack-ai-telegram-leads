@@ -403,3 +403,58 @@ def find_lead_by_telegram_id(telegram_id: str) -> dict:
             "message": f"Failed to find lead: {str(e)}"
         }
 
+
+def get_session_data(session_id: str) -> dict:
+    """
+    Get session data from the backend API.
+    
+    Args:
+        session_id (str): The session ID to retrieve data for
+        
+    Returns:
+        dict: A dictionary with the status, message, and session data
+    """
+    try:
+        logger.info(">>> Getting session data for session ID: %s", session_id)
+        
+        auth_service = get_auth_service()
+        response = auth_service.make_authenticated_request(
+            method='GET',
+            endpoint=f'/chat/sessions/afaae15e-0305-4b39-8b1b-f90fd5e20a6d'
+        )
+        
+        if response.status_code == 200:
+            logger.info("Session data retrieved successfully")
+            session_data = response.json()
+            return {
+                "status": "success",
+                "message": "Session data retrieved successfully.",
+                "session_data": session_data
+            }
+        elif response.status_code == 404:
+            logger.warning("Session not found with ID: %s", session_id)
+            return {
+                "status": "not_found",
+                "message": f"Session with ID {session_id} not found."
+            }
+        else:
+            error_msg = f"HTTP {response.status_code}"
+            try:
+                error_details = response.json()
+                error_msg += f": {error_details}"
+            except:
+                error_msg += f": {response.text}"
+            
+            logger.error("Backend API error: %s", error_msg)
+            return {
+                "status": "error",
+                "message": f"Backend API error: {error_msg}"
+            }
+            
+    except Exception as e:
+        logger.error("Failed to get session data: %s", str(e))
+        return {
+            "status": "error",
+            "message": f"Failed to get session data: {str(e)}"
+        }
+

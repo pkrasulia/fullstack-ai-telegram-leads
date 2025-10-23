@@ -173,18 +173,29 @@ def after_tool(
 
     return None
 
-def before_agent(callback_context: InvocationContext):
-    """Initialize customer profile and load recent message history."""
-    # In a production agent, this is set as part of the
-    # session creation for the agent. 
-    if "customer_profile" not in callback_context.state:
-        # Create a simple customer profile as JSON
-        default_customer = {
-            "customer_id": "123",
-            "name": "Default Customer",
-            "email": "customer@example.com"
-        }
-        callback_context.state["customer_profile"] = json.dumps(default_customer)
+def before_agent(callback_context):
+    print(">>> DEBUG: Inspecting _invocation_context")
 
+    inv = getattr(callback_context, "_invocation_context", None)
+    if not inv:
+        print("No _invocation_context found")
+        return
 
-    # logger.info(callback_context.state["customer_profile"])
+    try:
+        # Распечатываем атрибуты
+        print("Attributes of _invocation_context:", dir(inv))
+
+        # Пробуем распечатать __dict__, если есть
+        if hasattr(inv, "__dict__"):
+            print("\nDICT DUMP:")
+            print(json.dumps(inv.__dict__, indent=2, ensure_ascii=False, default=str))
+
+        # Иногда нужные данные лежат в inv.inputs
+        if hasattr(inv, "inputs"):
+            print("\nINPUTS:")
+            print(json.dumps(inv.inputs, indent=2, ensure_ascii=False, default=str))
+
+    except Exception as e:
+        print(f"Error inspecting _invocation_context: {e}")
+
+    print(">>> END DEBUG _invocation_context")
