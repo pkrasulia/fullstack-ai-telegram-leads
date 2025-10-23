@@ -14,7 +14,7 @@ export const Footer = () => {
         <div className="col-span-full xl:col-span-2">
           <Link href="/" className="ml-2 font-bold text-2xl flex">
             <LogoIcon />
-            GPT/HELP
+            LEAD/DASHBOARD
           </Link>
           <h3 className="text-center">
             {t('policy')}
@@ -23,7 +23,7 @@ export const Footer = () => {
               href="https://gpthelp.ru"
               className="text-primary transition-all border-primary hover:border-b-2 ml-1"
             >
-              GPT/HELP
+              LEAD/DASHBOARD
             </a>
             , {t('year')}
           </h3>
