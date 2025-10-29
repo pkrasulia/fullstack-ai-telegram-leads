@@ -1,3 +1,6 @@
 *
 !*/
+monitoring/grafana/pdf/
+monitoring/grafana/csv/
+monitoring/grafana/png/
 !.gitignore
