@@ -1,0 +1,24 @@
+{
+  "NotFoundPage": {
+    "title": "404",
+    "description": "Страница не найдена"
+  },
+
+  "navbar": {
+    "logo": "Account",
+    "routes": {},
+    "buttons": {},
+    "theme": {
+      "dark": "Тёмная",
+      "light": "Светлая",
+      "system": "Системная"
+    }
+  },
+
+  "home": {
+    "footer": {
+      "policy": "Все права защищены ©",
+      "year": "2024"
+    }
+  }
+}

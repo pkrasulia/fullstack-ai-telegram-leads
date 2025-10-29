@@ -1,0 +1,24 @@
+{
+  "NotFoundPage": {
+    "title": "Not found",
+    "description": "page not found"
+  },
+
+  "navbar": {
+    "logo": "Account",
+    "routes": {},
+    "buttons": {},
+    "theme": {
+      "dark": "Dark",
+      "light": "Light",
+      "system": "System"
+    }
+  },
+
+  "home": {
+    "footer": {
+      "policy": "All rights reserved ©",
+      "year": "2024"
+    }
+  }
+}
