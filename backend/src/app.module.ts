@@ -34,6 +34,9 @@ import { AiSessionModule } from './ai-session/ai-session.module';
 import { TelegramMessageService } from './telegram-message/telegram-message.service';
 import { TelegramMessageModule } from './telegram-message/telegram-message.module';
 import { ChatModule } from './chat/chat.module';
+import { MetricsModule } from './metrics/metrics.module';
+import { LoggerModule } from 'nestjs-pino';
+import { pinoConfig } from './pino/logger.config';
 
 // <database-block>
 const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig)
@@ -66,6 +69,7 @@ const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig)
       envFilePath: ['.env'],
     }),
     infrastructureDatabaseModule,
+    LoggerModule.forRootAsync(pinoConfig),
     I18nModule.forRootAsync({
       useFactory: (configService: ConfigService<AllConfigType>) => ({
         fallbackLanguage: configService.getOrThrow('app.fallbackLanguage', {
@@ -105,6 +109,7 @@ const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig)
     AiSessionModule,
     TelegramMessageModule,
     ChatModule,
+    MetricsModule,
   ],
   providers: [TelegramMessageService],
 })

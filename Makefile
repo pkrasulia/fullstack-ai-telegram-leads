@@ -8,15 +8,18 @@ ENV_BACKEND := .env.backend
 ENV_FRONTEND := .env.frontend
 ENV_AGENT := .env.agent
 ENV_TELEGRAM := .env.telegram
+ENV_MONITORING := .env.monitoring
 
 # Docker compose commands
 COMPOSE_DEV := docker-compose.dev.yml
 COMPOSE_INFRA := docker-compose.infrastructure.yml
 COMPOSE_PROD := docker-compose.prod.yml
+COMPOSE_MONITORING := docker-compose.monitoring.yml
 
 DC_INFRA := docker compose -f $(COMPOSE_INFRA) --env-file $(ENV_SHARED)
 DC_DEV := docker compose -f $(COMPOSE_DEV) --env-file $(ENV_SHARED) --env-file $(ENV_BACKEND) --env-file $(ENV_FRONTEND) --env-file $(ENV_AGENT) --env-file $(ENV_TELEGRAM)
 DC_PROD := docker compose -f $(COMPOSE_PROD) --env-file $(ENV_SHARED) --env-file $(ENV_BACKEND) --env-file $(ENV_FRONTEND) --env-file $(ENV_AGENT) --env-file $(ENV_TELEGRAM)
+DC_MONITORING := docker compose -f $(COMPOSE_MONITORING) --env-file $(ENV_MONITORING)
 
 # Individual services
 DC_BACKEND := docker compose -f $(COMPOSE_DEV) --env-file $(ENV_SHARED) --env-file $(ENV_BACKEND)
@@ -27,6 +30,7 @@ DC_AGENT := docker compose -f $(COMPOSE_DEV) --env-file $(ENV_SHARED) --env-file
 .PHONY: help setup dev stop logs clean
 .PHONY: backend frontend telegram agent
 .PHONY: prod prod-stop
+.PHONY: mg mg-stop
 
 # ===========================================
 # MAIN COMMANDS
@@ -51,6 +55,10 @@ help:
 	@echo "🏭 PRODUCTION:"
 	@echo "  make prod      - Start production"
 	@echo "  make prod-stop - Stop production"
+	@echo ""
+	@echo "📊 MONITORING:"
+	@echo "  make mg        - Start monitoring stack"
+	@echo "  make mg-stop   - Stop monitoring stack"
 	@echo ""
 	@echo "🧹 CLEANUP:"
 	@echo "  make clean     - Clean containers & images"
@@ -111,6 +119,20 @@ prod:
 prod-stop:
 	@echo "⏹️  Stopping production..."
 	$(DC_PROD) down
+
+# ===========================================
+# MONITORING
+# ===========================================
+
+## Start monitoring stack
+mg:
+	@echo "📊 Starting monitoring stack..."
+	$(DC_MONITORING) up -d
+
+## Stop monitoring stack
+mg-stop:
+	@echo "⏹️  Stopping monitoring stack..."
+	$(DC_MONITORING) down
 
 # ===========================================
 # CLEANUP

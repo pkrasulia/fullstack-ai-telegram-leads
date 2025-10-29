@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+import { Logger } from 'nestjs-pino';
 
 // Load environment files from root directory
 dotenv.config({ path: path.join(__dirname, '../../.env.shared') });
@@ -60,6 +61,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('docs', app, document);
 
+  app.useLogger(app.get(Logger));
   await app.listen(
     configService.getOrThrow('app.port', { infer: true }),
     '0.0.0.0',

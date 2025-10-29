@@ -39,7 +39,7 @@ services:
     image: adminer
     restart: always
     ports:
-      - 8080:8080
+      - 8085:8080
     networks:
       - app-network
 
@@ -76,6 +76,10 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: backend
+    labels:
+      logging: "enabled"
+      service: "backend"
+      language: "nodejs"
     restart: unless-stopped
     env_file:
       - .env.shared
@@ -94,8 +98,13 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
     networks:
       - app-network
+      - shared-network
 
   frontend:
     build:
@@ -103,6 +112,10 @@ services:
       dockerfile: Dockerfile.dev
       target: development
     container_name: frontend
+    labels:
+      logging: "enabled"
+      service: "frontend"
+      language: "nodejs"
     restart: unless-stopped
     env_file:
       - .env.frontend
@@ -130,6 +143,10 @@ services:
       dockerfile: Dockerfile
       target: development
     container_name: telegram-client
+    labels:
+      logging: "enabled"
+      service: "telegram"
+      language: "python"
     restart: unless-stopped
     env_file:
       - .env.telegram
@@ -150,6 +167,10 @@ services:
       dockerfile: Dockerfile
       target: development
     container_name: agent
+    labels:
+      logging: "enabled"
+      service: "ai-agent"
+      language: "python"
     restart: unless-stopped
     ports:
       - 8000:8000
@@ -179,3 +200,6 @@ volumes:
 networks:
   app-network:
     driver: bridge
+  shared-network:
+    #external: true
+    name: shared-network
