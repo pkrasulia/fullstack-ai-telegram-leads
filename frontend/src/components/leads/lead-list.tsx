@@ -127,12 +127,6 @@ export function LeadList({
         </div>
         <div className="flex items-center gap-2">
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 gap-1 text-sm">
-                <ListFilter className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only">{t('list.filter')}</span>
-              </Button>
-            </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>{t('list.filterByStatus')}</DropdownMenuLabel>
               <DropdownMenuSeparator />
