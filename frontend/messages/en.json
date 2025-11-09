@@ -60,5 +60,121 @@
         "details": "Dialog started in chat #12345"
       }
     }
+  },
+
+  "leads": {
+    "title": "Leads",
+    "description": "Manage leads from Telegram and other sources",
+    "addLead": "Add Lead",
+    "stats": {
+      "total": "Total Leads",
+      "totalDescription": "Total in database",
+      "new": "New",
+      "newDescription": "Require processing",
+      "converted": "Converted",
+      "conversionRate": "Conversion Rate"
+    },
+    "card": {
+      "title": "Lead Card",
+      "copyLeadId": "Copy Lead ID",
+      "notSelected": "Lead not selected",
+      "selectLead": "Select a lead from the list to view details",
+      "created": "Created",
+      "previousLead": "Previous Lead",
+      "nextLead": "Next Lead"
+    },
+    "actions": {
+      "telegram": "Telegram",
+      "email": "Email",
+      "more": "More",
+      "edit": "Edit",
+      "changeStatus": "Change Status",
+      "delete": "Delete",
+      "contact": "Contact"
+    },
+    "fields": {
+      "name": "Name",
+      "status": "Status",
+      "source": "Source",
+      "company": "Company",
+      "position": "Position",
+      "phone": "Phone",
+      "notes": "Notes"
+    },
+    "toasts": {
+      "errorLoading": "Error loading leads",
+      "errorLoadingDescription": "Failed to load data from server",
+      "importLeads": "Import leads",
+      "importLeadsDescription": "Lead import feature will be added later",
+      "understood": "Got it",
+      "leadDeleted": "Lead deleted",
+      "leadDeletedDescription": "removed from database",
+      "undo": "Undo",
+      "validationError": "Validation error",
+      "nameRequired": "Lead name is required",
+      "leadUpdated": "Lead updated",
+      "leadUpdatedDescription": "Information about {name} successfully saved",
+      "saveError": "Save error",
+      "saveErrorDescription": "Failed to save changes"
+    },
+    "list": {
+      "searchPlaceholder": "Search by name, email, company...",
+      "filter": "Filter",
+      "filterByStatus": "Filter by status",
+      "export": "Export",
+      "all": "All",
+      "new": "New",
+      "active": "Active",
+      "converted": "Converted",
+      "myLeads": "My Leads",
+      "leadsFromTelegram": "List of leads from Telegram",
+      "loading": "Loading leads...",
+      "notFound": "No leads found",
+      "notFoundDescription": "Try changing filters or adding new leads",
+      "contact": "Contact",
+      "source": "Source",
+      "status": "Status",
+      "createdAt": "Created at"
+    },
+    "status": {
+      "new": "New",
+      "contacted": "Contacted",
+      "qualified": "Qualified",
+      "converted": "Converted",
+      "lost": "Lost"
+    },
+    "source": {
+      "telegram": "Telegram",
+      "website": "Website",
+      "referral": "Referral",
+      "social_media": "Social Media",
+      "other": "Other"
+    },
+    "editDialog": {
+      "title": "Edit Lead",
+      "description": "Change lead information and click \"Save\"",
+      "name": "Name",
+      "namePlaceholder": "Enter lead name",
+      "email": "Email",
+      "phone": "Phone",
+      "phonePlaceholder": "+1 999 123 45 67",
+      "telegramUsername": "Telegram Username",
+      "telegramUsernamePlaceholder": "@username",
+      "telegramId": "Telegram ID",
+      "telegramIdPlaceholder": "123456789",
+      "company": "Company",
+      "companyPlaceholder": "Company name",
+      "position": "Position",
+      "positionPlaceholder": "Position",
+      "status": "Status",
+      "statusPlaceholder": "Select status",
+      "source": "Source",
+      "sourcePlaceholder": "Select source",
+      "notes": "Notes",
+      "notesPlaceholder": "Additional information about the lead...",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving..."
+    }
   }
 }

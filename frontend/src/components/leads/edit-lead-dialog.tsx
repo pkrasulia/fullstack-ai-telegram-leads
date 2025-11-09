@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -37,6 +38,7 @@ export function EditLeadDialog({
   onOpenChange,
   onLeadUpdated,
 }: EditLeadDialogProps) {
+  const t = useTranslations('leads');
   const [formData, setFormData] = useState({
     name: lead?.name || '',
     email: lead?.email || '',
@@ -84,8 +86,8 @@ export function EditLeadDialog({
     if (!lead) return;
 
     if (!formData.name.trim()) {
-      toast.error('Ошибка валидации', {
-        description: 'Имя лида обязательно для заполнения',
+      toast.error(t('toasts.validationError'), {
+        description: t('toasts.nameRequired'),
       });
       return;
     }
@@ -134,13 +136,13 @@ export function EditLeadDialog({
       onLeadUpdated(updatedLead);
       onOpenChange(false);
 
-      toast.success('Лид обновлен', {
-        description: `Информация о ${formData.name} успешно сохранена`,
+      toast.success(t('toasts.leadUpdated'), {
+        description: t('toasts.leadUpdatedDescription', { name: formData.name }),
       });
     } catch (error) {
       console.error('Error updating lead:', error);
-      toast.error('Ошибка сохранения', {
-        description: 'Не удалось сохранить изменения',
+      toast.error(t('toasts.saveError'), {
+        description: t('toasts.saveErrorDescription'),
       });
     } finally {
       setIsLoading(false);
@@ -148,46 +150,46 @@ export function EditLeadDialog({
   };
 
   const statusLabels = {
-    [LeadStatus.NEW]: 'Новый',
-    [LeadStatus.CONTACTED]: 'Контакт',
-    [LeadStatus.QUALIFIED]: 'Квалифицирован',
-    [LeadStatus.CONVERTED]: 'Конверсия',
-    [LeadStatus.LOST]: 'Потерян',
+    [LeadStatus.NEW]: t('status.new'),
+    [LeadStatus.CONTACTED]: t('status.contacted'),
+    [LeadStatus.QUALIFIED]: t('status.qualified'),
+    [LeadStatus.CONVERTED]: t('status.converted'),
+    [LeadStatus.LOST]: t('status.lost'),
   };
 
   const sourceLabels = {
-    [LeadSource.TELEGRAM]: 'Telegram',
-    [LeadSource.WEBSITE]: 'Сайт',
-    [LeadSource.REFERRAL]: 'Реферал',
-    [LeadSource.SOCIAL_MEDIA]: 'Соц. сети',
-    [LeadSource.OTHER]: 'Другое',
+    [LeadSource.TELEGRAM]: t('source.telegram'),
+    [LeadSource.WEBSITE]: t('source.website'),
+    [LeadSource.REFERRAL]: t('source.referral'),
+    [LeadSource.SOCIAL_MEDIA]: t('source.social_media'),
+    [LeadSource.OTHER]: t('source.other'),
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Редактировать лида</DialogTitle>
+          <DialogTitle>{t('editDialog.title')}</DialogTitle>
           <DialogDescription>
-            Измените информацию о лиде и нажмите "Сохранить"
+            {t('editDialog.description')}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Имя *</Label>
+              <Label htmlFor="name">{t('editDialog.name')} *</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                placeholder="Введите имя лида"
+                placeholder={t('editDialog.namePlaceholder')}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('editDialog.email')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -200,59 +202,59 @@ export function EditLeadDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="phone">Телефон</Label>
+              <Label htmlFor="phone">{t('editDialog.phone')}</Label>
               <Input
                 id="phone"
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
-                placeholder="+7 999 123 45 67"
+                placeholder={t('editDialog.phonePlaceholder')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="telegramUsername">Telegram Username</Label>
+              <Label htmlFor="telegramUsername">{t('editDialog.telegramUsername')}</Label>
               <Input
                 id="telegramUsername"
                 value={formData.telegramUsername}
                 onChange={(e) =>
                   handleInputChange('telegramUsername', e.target.value)
                 }
-                placeholder="@username"
+                placeholder={t('editDialog.telegramUsernamePlaceholder')}
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="company">Компания</Label>
+              <Label htmlFor="company">{t('editDialog.company')}</Label>
               <Input
                 id="company"
                 value={formData.company}
                 onChange={(e) => handleInputChange('company', e.target.value)}
-                placeholder="Название компании"
+                placeholder={t('editDialog.companyPlaceholder')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="position">Должность</Label>
+              <Label htmlFor="position">{t('editDialog.position')}</Label>
               <Input
                 id="position"
                 value={formData.position}
                 onChange={(e) => handleInputChange('position', e.target.value)}
-                placeholder="Должность"
+                placeholder={t('editDialog.positionPlaceholder')}
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="status">Статус</Label>
+              <Label htmlFor="status">{t('editDialog.status')}</Label>
               <Select
                 value={formData.status}
                 onValueChange={(value) => handleInputChange('status', value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Выберите статус" />
+                  <SelectValue placeholder={t('editDialog.statusPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(statusLabels).map(([value, label]) => (
@@ -265,13 +267,13 @@ export function EditLeadDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="source">Источник</Label>
+              <Label htmlFor="source">{t('editDialog.source')}</Label>
               <Select
                 value={formData.source}
                 onValueChange={(value) => handleInputChange('source', value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Выберите источник" />
+                  <SelectValue placeholder={t('editDialog.sourcePlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(sourceLabels).map(([value, label]) => (
@@ -285,22 +287,22 @@ export function EditLeadDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="telegramId">Telegram ID</Label>
+            <Label htmlFor="telegramId">{t('editDialog.telegramId')}</Label>
             <Input
               id="telegramId"
               value={formData.telegramId}
               onChange={(e) => handleInputChange('telegramId', e.target.value)}
-              placeholder="123456789"
+              placeholder={t('editDialog.telegramIdPlaceholder')}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Заметки</Label>
+            <Label htmlFor="notes">{t('editDialog.notes')}</Label>
             <Textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => handleInputChange('notes', e.target.value)}
-              placeholder="Дополнительная информация о лиде..."
+              placeholder={t('editDialog.notesPlaceholder')}
               rows={3}
             />
           </div>
@@ -312,10 +314,10 @@ export function EditLeadDialog({
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
             >
-              Отмена
+              {t('editDialog.cancel')}
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Сохранение...' : 'Сохранить'}
+              {isLoading ? t('editDialog.saving') : t('editDialog.save')}
             </Button>
           </DialogFooter>
         </form>

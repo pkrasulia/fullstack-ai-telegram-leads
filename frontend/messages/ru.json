@@ -60,5 +60,121 @@
         "details": "Начат диалог в чате #12345"
       }
     }
+  },
+
+  "leads": {
+    "title": "Лиды",
+    "description": "Управление лидами из Telegram и других источников",
+    "addLead": "Добавить лида",
+    "stats": {
+      "total": "Всего лидов",
+      "totalDescription": "Всего в базе данных",
+      "new": "Новые",
+      "newDescription": "Требуют обработки",
+      "converted": "Конверсии",
+      "conversionRate": "Конверсия"
+    },
+    "card": {
+      "title": "Карточка лида",
+      "copyLeadId": "Copy Lead ID",
+      "notSelected": "Лид не выбран",
+      "selectLead": "Выберите лида из списка для просмотра деталей",
+      "created": "Создан",
+      "previousLead": "Previous Lead",
+      "nextLead": "Next Lead"
+    },
+    "actions": {
+      "telegram": "Telegram",
+      "email": "Email",
+      "more": "More",
+      "edit": "Редактировать",
+      "changeStatus": "Изменить статус",
+      "delete": "Удалить",
+      "contact": "Связаться"
+    },
+    "fields": {
+      "name": "Имя",
+      "status": "Статус",
+      "source": "Источник",
+      "company": "Компания",
+      "position": "Должность",
+      "phone": "Телефон",
+      "notes": "Заметки"
+    },
+    "toasts": {
+      "errorLoading": "Ошибка загрузки лидов",
+      "errorLoadingDescription": "Не удалось загрузить данные с сервера",
+      "importLeads": "Импорт лидов",
+      "importLeadsDescription": "Функция импорта лидов будет добавлена позже",
+      "understood": "Понятно",
+      "leadDeleted": "Лид удален",
+      "leadDeletedDescription": "удален из базы",
+      "undo": "Отменить",
+      "validationError": "Ошибка валидации",
+      "nameRequired": "Имя лида обязательно для заполнения",
+      "leadUpdated": "Лид обновлен",
+      "leadUpdatedDescription": "Информация о {name} успешно сохранена",
+      "saveError": "Ошибка сохранения",
+      "saveErrorDescription": "Не удалось сохранить изменения"
+    },
+    "list": {
+      "searchPlaceholder": "Поиск по имени, email, компании...",
+      "filter": "Фильтр",
+      "filterByStatus": "Фильтр по статусу",
+      "export": "Экспорт",
+      "all": "Все",
+      "new": "Новые",
+      "active": "Активные",
+      "converted": "Конверсии",
+      "myLeads": "Мои лиды",
+      "leadsFromTelegram": "Список лидов из Telegram",
+      "loading": "Загрузка лидов...",
+      "notFound": "Лиды не найдены",
+      "notFoundDescription": "Попробуйте изменить фильтры или добавить новых лидов",
+      "contact": "Контакт",
+      "source": "Источник",
+      "status": "Статус",
+      "createdAt": "Дата создания"
+    },
+    "status": {
+      "new": "Новый",
+      "contacted": "Контакт",
+      "qualified": "Квалифицирован",
+      "converted": "Конверсия",
+      "lost": "Потерян"
+    },
+    "source": {
+      "telegram": "Telegram",
+      "website": "Сайт",
+      "referral": "Реферал",
+      "social_media": "Соц. сети",
+      "other": "Другое"
+    },
+    "editDialog": {
+      "title": "Редактировать лида",
+      "description": "Измените информацию о лиде и нажмите \"Сохранить\"",
+      "name": "Имя",
+      "namePlaceholder": "Введите имя лида",
+      "email": "Email",
+      "phone": "Телефон",
+      "phonePlaceholder": "+7 999 123 45 67",
+      "telegramUsername": "Telegram Username",
+      "telegramUsernamePlaceholder": "@username",
+      "telegramId": "Telegram ID",
+      "telegramIdPlaceholder": "123456789",
+      "company": "Компания",
+      "companyPlaceholder": "Название компании",
+      "position": "Должность",
+      "positionPlaceholder": "Должность",
+      "status": "Статус",
+      "statusPlaceholder": "Выберите статус",
+      "source": "Источник",
+      "sourcePlaceholder": "Выберите источник",
+      "notes": "Заметки",
+      "notesPlaceholder": "Дополнительная информация о лиде...",
+      "cancel": "Отмена",
+      "save": "Сохранить",
+      "saving": "Сохранение..."
+    }
   }
 }

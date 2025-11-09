@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import useAuth from '@/services/auth/use-auth';
 import { useAppSelector, useAppDispatch, useAppStore } from '@/lib/hooks';
 import withPageRequiredAuth from '@/services/auth/with-page-required-auth';
@@ -63,6 +64,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 function LeadsPage() {
+  const t = useTranslations('leads');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
@@ -124,8 +126,8 @@ function LeadsPage() {
         });
       } catch (error) {
         console.error('Error fetching leads:', error);
-        toast.error('Ошибка загрузки лидов', {
-          description: 'Не удалось загрузить данные с сервера',
+        toast.error(t('toasts.errorLoading'), {
+          description: t('toasts.errorLoadingDescription'),
         });
       } finally {
         setLoading(false);
@@ -133,13 +135,13 @@ function LeadsPage() {
     };
 
     fetchLeads();
-  }, [getLeadsService, getNewLeadsService, getConvertedLeadsService]);
+  }, [getLeadsService, getNewLeadsService, getConvertedLeadsService, t]);
 
   const handleLeadImport = () => {
-    toast('Импорт лидов', {
-      description: 'Функция импорта лидов будет добавлена позже',
+    toast(t('toasts.importLeads'), {
+      description: t('toasts.importLeadsDescription'),
       action: {
-        label: 'Понятно',
+        label: t('toasts.understood'),
         onClick: () => console.log('Import leads'),
       },
     });
@@ -189,10 +191,10 @@ function LeadsPage() {
 
   const handleLeadDelete = () => {
     if (selectedLead) {
-      toast('Лид удален', {
-        description: `${selectedLead.name} удален из базы`,
+      toast(t('toasts.leadDeleted'), {
+        description: `${selectedLead.name} ${t('toasts.leadDeletedDescription')}`,
         action: {
-          label: 'Отменить',
+          label: t('toasts.undo'),
           onClick: () => console.log('Undo delete'),
         },
       });
@@ -205,14 +207,14 @@ function LeadsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Лиды</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Управление лидами из Telegram и других источников
+            {t('description')}
           </p>
         </div>
         <Button className="gap-2">
           <Plus className="h-4 w-4" />
-          Добавить лида
+          {t('addLead')}
         </Button>
       </div>
 
@@ -220,26 +222,26 @@ function LeadsPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Всего лидов</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('stats.total')}</CardTitle>
             <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {loading ? '...' : stats.total}
             </div>
-            <p className="text-xs text-muted-foreground">Всего в базе данных</p>
+            <p className="text-xs text-muted-foreground">{t('stats.totalDescription')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Новые</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('stats.new')}</CardTitle>
             <MessageCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {loading ? '...' : stats.new}
             </div>
-            <p className="text-xs text-muted-foreground">Требуют обработки</p>
+            <p className="text-xs text-muted-foreground">{t('stats.newDescription')}</p>
           </CardContent>
         </Card>
       </div>
@@ -259,21 +261,21 @@ function LeadsPage() {
             <CardHeader className="flex flex-row items-start bg-muted/50">
               <div className="grid gap-0.5">
                 <CardTitle className="group flex items-center gap-2 text-lg">
-                  Карточка лида
+                  {t('card.title')}
                   <Button
                     size="icon"
                     variant="outline"
                     className="h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
                   >
                     <Copy className="h-3 w-3" />
-                    <span className="sr-only">Copy Lead ID</span>
+                    <span className="sr-only">{t('card.copyLeadId')}</span>
                   </Button>
                 </CardTitle>
                 <CardDescription>
                   {selectedLead ? (
                     <span>{selectedLead.name}</span>
                   ) : (
-                    <span>Лид не выбран</span>
+                    <span>{t('card.notSelected')}</span>
                   )}
                 </CardDescription>
               </div>
@@ -284,7 +286,7 @@ function LeadsPage() {
                       <Button size="sm" variant="outline" className="h-8 gap-1">
                         <MessageCircle className="h-3.5 w-3.5" />
                         <span className="lg:sr-only xl:not-sr-only xl:whitespace-nowrap">
-                          Telegram
+                          {t('actions.telegram')}
                         </span>
                       </Button>
                     )}
@@ -298,7 +300,7 @@ function LeadsPage() {
                         <a href={`mailto:${selectedLead.email}`}>
                           <Mail className="h-3.5 w-3.5" />
                           <span className="lg:sr-only xl:not-sr-only xl:whitespace-nowrap">
-                            Email
+                            {t('actions.email')}
                           </span>
                         </a>
                       </Button>
@@ -307,26 +309,26 @@ function LeadsPage() {
                 )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      className="h-8 w-8"
-                      disabled={!selectedLead}
-                    >
-                      <MoreVertical className="h-3.5 w-3.5" />
-                      <span className="sr-only">More</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={handleLeadEdit}>
-                      Редактировать
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>Изменить статус</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLeadDelete}>
-                      Удалить
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="h-8 w-8"
+                        disabled={!selectedLead}
+                      >
+                        <MoreVertical className="h-3.5 w-3.5" />
+                        <span className="sr-only">{t('actions.more')}</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleLeadEdit}>
+                        {t('actions.edit')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>{t('actions.changeStatus')}</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleLeadDelete}>
+                        {t('actions.delete')}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
                 </DropdownMenu>
               </div>
             </CardHeader>
@@ -336,7 +338,7 @@ function LeadsPage() {
                   <div className="grid grid-cols-1 gap-4">
                     <div>
                       <label className="text-xs font-medium text-muted-foreground">
-                        Имя
+                        {t('fields.name')}
                       </label>
                       <p className="text-sm font-medium">{selectedLead.name}</p>
                     </div>
@@ -344,7 +346,7 @@ function LeadsPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="text-xs font-medium text-muted-foreground">
-                          Статус
+                          {t('fields.status')}
                         </label>
                         <p className="text-sm capitalize">
                           {selectedLead.status}
@@ -352,7 +354,7 @@ function LeadsPage() {
                       </div>
                       <div>
                         <label className="text-xs font-medium text-muted-foreground">
-                          Источник
+                          {t('fields.source')}
                         </label>
                         <p className="text-sm capitalize">
                           {selectedLead.source}
@@ -365,7 +367,7 @@ function LeadsPage() {
                         {selectedLead.company && (
                           <div>
                             <label className="text-xs font-medium text-muted-foreground">
-                              Компания
+                              {t('fields.company')}
                             </label>
                             <p className="text-sm">{selectedLead.company}</p>
                           </div>
@@ -373,7 +375,7 @@ function LeadsPage() {
                         {selectedLead.position && (
                           <div>
                             <label className="text-xs font-medium text-muted-foreground">
-                              Должность
+                              {t('fields.position')}
                             </label>
                             <p className="text-sm">{selectedLead.position}</p>
                           </div>
@@ -393,7 +395,7 @@ function LeadsPage() {
                       {selectedLead.phone && (
                         <div>
                           <label className="text-xs font-medium text-muted-foreground">
-                            Телефон
+                            {t('fields.phone')}
                           </label>
                           <p className="text-sm">{selectedLead.phone}</p>
                         </div>
@@ -414,7 +416,7 @@ function LeadsPage() {
                   {selectedLead.notes && (
                     <div>
                       <label className="text-xs font-medium text-muted-foreground">
-                        Заметки
+                        {t('fields.notes')}
                       </label>
                       <p className="text-sm mt-1 p-3 bg-muted/50 rounded-md">
                         {selectedLead.notes}
@@ -425,14 +427,14 @@ function LeadsPage() {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Выберите лида из списка для просмотра деталей</p>
+                  <p>{t('card.selectLead')}</p>
                 </div>
               )}
             </CardContent>
             <CardFooter className="flex flex-row items-center border-t bg-muted/50 px-6 py-3">
               {selectedLead ? (
                 <div className="text-xs text-muted-foreground">
-                  Создан{' '}
+                  {t('card.created')}{' '}
                   <time dateTime={selectedLead.createdAt}>
                     {new Date(selectedLead.createdAt).toLocaleDateString(
                       'ru-RU',
@@ -452,13 +454,13 @@ function LeadsPage() {
                   <PaginationItem>
                     <Button size="icon" variant="outline" className="h-6 w-6">
                       <ChevronLeft className="h-3.5 w-3.5" />
-                      <span className="sr-only">Previous Lead</span>
+                      <span className="sr-only">{t('card.previousLead')}</span>
                     </Button>
                   </PaginationItem>
                   <PaginationItem>
                     <Button size="icon" variant="outline" className="h-6 w-6">
                       <ChevronRight className="h-3.5 w-3.5" />
-                      <span className="sr-only">Next Lead</span>
+                      <span className="sr-only">{t('card.nextLead')}</span>
                     </Button>
                   </PaginationItem>
                 </PaginationContent>

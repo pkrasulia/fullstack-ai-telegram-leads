@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -53,22 +54,6 @@ const statusColors = {
   lost: 'bg-red-100 text-red-800',
 };
 
-const statusLabels = {
-  new: 'Новый',
-  contacted: 'Контакт',
-  qualified: 'Квалифицирован',
-  converted: 'Конверсия',
-  lost: 'Потерян',
-};
-
-const sourceLabels = {
-  telegram: 'Telegram',
-  website: 'Сайт',
-  referral: 'Реферал',
-  social_media: 'Соц. сети',
-  other: 'Другое',
-};
-
 interface LeadListProps {
   leads: Lead[];
   loading?: boolean;
@@ -82,8 +67,25 @@ export function LeadList({
   selectedLead,
   onLeadSelect,
 }: LeadListProps) {
+  const t = useTranslations('leads');
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  const statusLabels = {
+    new: t('status.new'),
+    contacted: t('status.contacted'),
+    qualified: t('status.qualified'),
+    converted: t('status.converted'),
+    lost: t('status.lost'),
+  };
+
+  const sourceLabels = {
+    telegram: t('source.telegram'),
+    website: t('source.website'),
+    referral: t('source.referral'),
+    social_media: t('source.social_media'),
+    other: t('source.other'),
+  };
 
   const filteredLeads = leads.filter((lead) => {
     // Filter by search query
@@ -117,7 +119,7 @@ export function LeadList({
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Поиск по имени, email, компании..."
+            placeholder={t('list.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -128,23 +130,23 @@ export function LeadList({
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 gap-1 text-sm">
                 <ListFilter className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only">Фильтр</span>
+                <span className="sr-only sm:not-sr-only">{t('list.filter')}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Фильтр по статусу</DropdownMenuLabel>
+              <DropdownMenuLabel>{t('list.filterByStatus')}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem checked>Новые</DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem>Контакт</DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem checked>{t('list.new')}</DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem>{t('status.contacted')}</DropdownMenuCheckboxItem>
               <DropdownMenuCheckboxItem>
-                Квалифицированные
+                {t('status.qualified')}
               </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem>Конверсии</DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem>{t('list.converted')}</DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Button size="sm" variant="outline" className="h-8 gap-1 text-sm">
             <File className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only">Экспорт</span>
+            <span className="sr-only sm:not-sr-only">{t('list.export')}</span>
           </Button>
         </div>
       </div>
@@ -152,12 +154,12 @@ export function LeadList({
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="all">Все ({leads.length})</TabsTrigger>
+          <TabsTrigger value="all">{t('list.all')} ({leads.length})</TabsTrigger>
           <TabsTrigger value="new">
-            Новые ({leads.filter((l) => l.status === 'new').length})
+            {t('list.new')} ({leads.filter((l) => l.status === 'new').length})
           </TabsTrigger>
           <TabsTrigger value="active">
-            Активные (
+            {t('list.active')} (
             {
               leads.filter((l) => ['contacted', 'qualified'].includes(l.status))
                 .length
@@ -165,35 +167,35 @@ export function LeadList({
             )
           </TabsTrigger>
           <TabsTrigger value="converted">
-            Конверсии ({leads.filter((l) => l.status === 'converted').length})
+            {t('list.converted')} ({leads.filter((l) => l.status === 'converted').length})
           </TabsTrigger>
         </TabsList>
         <TabsContent value={activeTab}>
           <Card x-chunk="dashboard-05-chunk-3">
             <CardHeader className="px-7">
-              <CardTitle>Мои лиды</CardTitle>
-              <CardDescription>Список лидов из Telegram</CardDescription>
+              <CardTitle>{t('list.myLeads')}</CardTitle>
+              <CardDescription>{t('list.leadsFromTelegram')}</CardDescription>
             </CardHeader>
             <CardContent>
               {loading ? (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground">Загрузка лидов...</p>
+                  <p className="text-muted-foreground">{t('list.loading')}</p>
                 </div>
               ) : filteredLeads.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Контакт</TableHead>
+                      <TableHead>{t('list.contact')}</TableHead>
                       <TableHead className="hidden sm:table-cell">
-                        Источник
+                        {t('list.source')}
                       </TableHead>
                       <TableHead className="hidden sm:table-cell">
-                        Статус
+                        {t('list.status')}
                       </TableHead>
                       <TableHead className="hidden md:table-cell">
-                        Дата создания
+                        {t('list.createdAt')}
                       </TableHead>
-                      <TableHead className="text-right">Действия</TableHead>
+                      <TableHead className="text-right">{t('actions.contact')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -277,7 +279,7 @@ export function LeadList({
                         </TableCell>
                         <TableCell className="text-right">
                           <Button variant="ghost" size="sm">
-                            Связаться
+                            {t('actions.contact')}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -286,9 +288,9 @@ export function LeadList({
                 </Table>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground">Лиды не найдены</p>
+                  <p className="text-muted-foreground">{t('list.notFound')}</p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Попробуйте изменить фильтры или добавить новых лидов
+                    {t('list.notFoundDescription')}
                   </p>
                 </div>
               )}
