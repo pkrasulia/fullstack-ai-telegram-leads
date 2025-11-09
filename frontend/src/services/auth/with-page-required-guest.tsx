@@ -21,7 +21,7 @@ function withPageRequiredGuest(Component: FunctionComponent<PropsType>) {
 
         const params = new URLSearchParams(window.location.search);
         const returnTo =
-          params.get('returnTo') ?? `/${language}/panel/dashboard`;
+          params.get('returnTo') ?? `/${language}/panel/leads`;
         router.replace(returnTo);
       };
 
