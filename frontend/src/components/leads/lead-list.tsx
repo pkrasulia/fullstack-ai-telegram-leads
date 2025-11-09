@@ -112,6 +112,80 @@ export function LeadList({
     onLeadSelect?.(lead);
   };
 
+  const handleExportToCSV = () => {
+    // Функция для экранирования CSV значений
+    const escapeCSV = (value: string | undefined | null): string => {
+      if (!value) return '';
+      // Заменяем переносы строк на пробелы и кавычки на двойные кавычки
+      const escaped = value
+        .replace(/\r\n/g, ' ')
+        .replace(/\n/g, ' ')
+        .replace(/\r/g, ' ')
+        .replace(/"/g, '""');
+      // Если значение содержит запятую или кавычку, оборачиваем в кавычки
+      if (escaped.includes(',') || escaped.includes('"')) {
+        return `"${escaped}"`;
+      }
+      return escaped;
+    };
+
+    // Заголовки CSV с переводами
+    const headers = [
+      t('list.exportFields.id'),
+      t('list.exportFields.name'),
+      t('list.exportFields.email'),
+      t('list.exportFields.phone'),
+      t('list.exportFields.telegram'),
+      t('list.exportFields.company'),
+      t('list.exportFields.position'),
+      t('list.exportFields.status'),
+      t('list.exportFields.source'),
+      t('list.exportFields.notes'),
+      t('list.exportFields.createdAt'),
+      t('list.exportFields.updatedAt'),
+    ];
+
+    // Конвертируем данные в CSV формат
+    const csvRows = [
+      headers.map(escapeCSV).join(','),
+      ...filteredLeads.map((lead) => {
+        const row = [
+          lead.id.toString(),
+          escapeCSV(lead.name),
+          escapeCSV(lead.email),
+          escapeCSV(lead.phone),
+          escapeCSV(lead.telegramUsername),
+          escapeCSV(lead.company),
+          escapeCSV(lead.position),
+          escapeCSV(statusLabels[lead.status] || lead.status),
+          escapeCSV(sourceLabels[lead.source] || lead.source),
+          escapeCSV(lead.notes),
+          escapeCSV(new Date(lead.createdAt).toLocaleString('ru-RU')),
+          escapeCSV(new Date(lead.updatedAt).toLocaleString('ru-RU')),
+        ];
+        return row.join(',');
+      }),
+    ];
+
+    const csvContent = csvRows.join('\n');
+    
+    // Создаем Blob и скачиваем файл
+    // \ufeff - BOM для правильного отображения кириллицы в Excel
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // Генерируем имя файла с текущей датой
+    const date = new Date().toISOString().split('T')[0];
+    link.download = `leads_${date}.csv`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-4">
       {/* Search and Filters */}
@@ -138,7 +212,13 @@ export function LeadList({
               <DropdownMenuCheckboxItem>{t('list.converted')}</DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button size="sm" variant="outline" className="h-8 gap-1 text-sm">
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="h-8 gap-1 text-sm"
+            onClick={handleExportToCSV}
+            disabled={filteredLeads.length === 0}
+          >
             <File className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only">{t('list.export')}</span>
           </Button>

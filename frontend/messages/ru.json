@@ -179,7 +179,21 @@
       "contact": "Контакт",
       "source": "Источник",
       "status": "Статус",
-      "createdAt": "Дата создания"
+      "createdAt": "Дата создания",
+      "exportFields": {
+        "id": "ID",
+        "name": "Имя",
+        "email": "Email",
+        "phone": "Телефон",
+        "telegram": "Telegram",
+        "company": "Компания",
+        "position": "Должность",
+        "status": "Статус",
+        "source": "Источник",
+        "notes": "Заметки",
+        "createdAt": "Дата создания",
+        "updatedAt": "Дата обновления"
+      }
     },
     "status": {
       "new": "Новый",

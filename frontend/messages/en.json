@@ -179,7 +179,21 @@
       "contact": "Contact",
       "source": "Source",
       "status": "Status",
-      "createdAt": "Created at"
+      "createdAt": "Created at",
+      "exportFields": {
+        "id": "ID",
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "telegram": "Telegram",
+        "company": "Company",
+        "position": "Position",
+        "status": "Status",
+        "source": "Source",
+        "notes": "Notes",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At"
+      }
     },
     "status": {
       "new": "New",

@@ -60,7 +60,7 @@ import { SheetClose, SheetFooter } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { LeadList } from '@/components/leads/lead-list';
 import { EditLeadDialog } from '@/components/leads/edit-lead-dialog';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
 function LeadsPage() {
@@ -79,6 +79,8 @@ function LeadsPage() {
   const { user: authUser } = useAuth();
   const store = useAppStore();
   const dispatch = useAppDispatch();
+  const cardContainerRef = useRef<HTMLDivElement>(null);
+  const initialOffsetRef = useRef<number | null>(null);
 
   const getLeadsService = useGetLeadsService();
   const getNewLeadsService = useGetLeadsByStatusService();
@@ -136,6 +138,48 @@ function LeadsPage() {
 
     fetchLeads();
   }, [getLeadsService, getNewLeadsService, getConvertedLeadsService, t]);
+
+  useEffect(() => {
+    if (!cardContainerRef.current) return;
+
+    // Находим скроллящийся контейнер (main с overflow-auto)
+    const scrollContainer = cardContainerRef.current.closest('main');
+    if (!scrollContainer) return;
+
+    // Инициализируем начальную позицию
+    const initPosition = () => {
+      if (cardContainerRef.current && initialOffsetRef.current === null) {
+        const rect = cardContainerRef.current.getBoundingClientRect();
+        const containerRect = scrollContainer.getBoundingClientRect();
+        initialOffsetRef.current = rect.top - containerRect.top;
+      }
+    };
+
+    const handleScroll = () => {
+      if (!cardContainerRef.current) return;
+
+      // Инициализируем, если еще не инициализировано
+      if (initialOffsetRef.current === null) {
+        initPosition();
+        return;
+      }
+
+      // Обновляем позицию карточки в зависимости от скролла
+      const scrollTop = scrollContainer.scrollTop;
+      
+      // Используем transform для плавного движения вместе со скроллом
+      cardContainerRef.current.style.transform = `translateY(${scrollTop}px)`;
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Небольшая задержка для правильной инициализации после рендера
+    setTimeout(initPosition, 100);
+
+    return () => {
+      scrollContainer.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   const handleLeadImport = () => {
     toast(t('toasts.importLeads'), {
@@ -256,7 +300,11 @@ function LeadsPage() {
             onLeadSelect={setSelectedLead}
           />
         </div>
-        <div style={{ position: 'sticky', top: '70px' }}>
+        <div 
+          ref={cardContainerRef}
+          className="self-start max-h-[calc(100vh-80px)] overflow-y-auto"
+          style={{ willChange: 'transform' }}
+        >
           <Card className="overflow-hidden" x-chunk="dashboard-05-chunk-4">
             <CardHeader className="flex flex-row items-start bg-muted/50">
               <div className="grid gap-0.5">
