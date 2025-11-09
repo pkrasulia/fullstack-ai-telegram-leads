@@ -20,5 +20,45 @@
       "policy": "All rights reserved ©",
       "year": "2024"
     }
+  },
+
+  "logs": {
+    "title": "Action History and Events",
+    "exportLogs": "Export Logs",
+    "searchPlaceholder": "Search logs...",
+    "eventLog": "Event Log",
+    "user": "User",
+    "dateRangeSelected": "Date range selected:",
+    "severity": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "sampleLogs": {
+      "login": {
+        "action": "System Login",
+        "details": "Successful login from IP 192.168.1.1"
+      },
+      "settingsChange": {
+        "action": "Settings Changed",
+        "details": "Security settings updated"
+      },
+      "integrationAdded": {
+        "action": "Integration Added",
+        "details": "Integration with CRM system"
+      },
+      "chatCreated": {
+        "action": "Chat Created",
+        "details": "New chat #12345 with client"
+      },
+      "messageReceived": {
+        "action": "Message Received",
+        "details": "New message in chat #12345"
+      },
+      "dialogStarted": {
+        "action": "Dialog Started",
+        "details": "Dialog started in chat #12345"
+      }
+    }
   }
 }

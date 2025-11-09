@@ -1,5 +1,6 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import withPageRequiredAuth from '@/services/auth/with-page-required-auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -23,55 +24,62 @@ const SEVERITY_COLORS = {
   high: 'bg-red-100 text-red-800',
 };
 
-const sampleLogs: LogEntry[] = [
+const getSampleLogs = (t: any): LogEntry[] => [
   {
     id: '1',
     timestamp: '2024-07-22 10:30:15',
-    action: 'Вход в систему',
+    action: t('sampleLogs.login.action'),
     user: 'user@example.com',
-    details: 'Успешный вход с IP 192.168.1.1',
+    details: t('sampleLogs.login.details'),
     severity: 'low',
   },
   {
     id: '2',
     timestamp: '2024-07-22 11:45:22',
-    action: 'Изменение настроек',
+    action: t('sampleLogs.settingsChange.action'),
     user: 'admin@example.com',
-    details: 'Обновлены настройки безопасности',
+    details: t('sampleLogs.settingsChange.details'),
   },
   {
     id: '3',
     timestamp: '2024-07-22 12:30:00',
-    action: 'Добавлена интеграция',
+    action: t('sampleLogs.integrationAdded.action'),
     user: 'dev@example.com',
-    details: 'Интеграция с CRM системой',
+    details: t('sampleLogs.integrationAdded.details'),
   },
   {
     id: '4',
     timestamp: '2024-07-22 13:15:45',
-    action: 'Создан чат',
+    action: t('sampleLogs.chatCreated.action'),
     user: 'support@example.com',
-    details: 'Новый чат #12345 с клиентом',
+    details: t('sampleLogs.chatCreated.details'),
   },
   {
     id: '5',
     timestamp: '2024-07-22 14:00:10',
-    action: 'Получено сообщение',
+    action: t('sampleLogs.messageReceived.action'),
     user: 'client@example.com',
-    details: 'Новое сообщение в чате #12345',
+    details: t('sampleLogs.messageReceived.details'),
   },
   {
     id: '6',
     timestamp: '2024-07-22 14:05:30',
-    action: 'Начат диалог',
+    action: t('sampleLogs.dialogStarted.action'),
     user: 'support@example.com',
-    details: 'Начат диалог в чате #12345',
+    details: t('sampleLogs.dialogStarted.details'),
   },
 ];
 
 function LogsPage() {
-  const [logs, setLogs] = useState<LogEntry[]>(sampleLogs);
+  const t = useTranslations('logs');
+  const locale = useLocale();
+  const [logs, setLogs] = useState<LogEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Initialize and update logs when locale changes
+  useEffect(() => {
+    setLogs(getSampleLogs(t));
+  }, [locale, t]);
 
   const filteredLogs = useMemo(() => {
     return logs.filter(
@@ -83,20 +91,20 @@ function LogsPage() {
   }, [logs, searchTerm]);
 
   const handleDateRangeChange = (range: { from: Date; to: Date }) => {
-    console.log('Выбран диапазон дат:', range);
+    console.log(t('dateRangeSelected'), range);
   };
 
   return (
     <div className="container mx-auto py-12">
-      <h1 className="text-3xl font-bold mb-8">История действий и событий</h1>
+      <h1 className="text-3xl font-bold mb-8">{t('title')}</h1>
 
       <div className="mb-6 space-y-4">
         <div className="flex justify-between items-center">
           <CalendarDateRangePicker onChange={handleDateRangeChange} />
-          <Button>Экспорт логов</Button>
+          <Button>{t('exportLogs')}</Button>
         </div>
         <Input
-          placeholder="Поиск по логам..."
+          placeholder={t('searchPlaceholder')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full"
@@ -105,7 +113,7 @@ function LogsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Журнал событий</CardTitle>
+          <CardTitle>{t('eventLog')}</CardTitle>
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[600px] pr-4">
@@ -116,11 +124,11 @@ function LogsPage() {
               >
                 <p className="text-xs text-gray-500">{log.timestamp}</p>
                 <h3 className="text-base font-semibold">{log.action}</h3>
-                <p className="text-sm">Пользователь: {log.user}</p>
+                <p className="text-sm">{t('user')}: {log.user}</p>
                 <p className="text-sm mt-1">{log.details}</p>
                 {log.severity && (
                   <Badge className={`mt-2 ${SEVERITY_COLORS[log.severity]}`}>
-                    {log.severity}
+                    {t(`severity.${log.severity}`)}
                   </Badge>
                 )}
               </div>

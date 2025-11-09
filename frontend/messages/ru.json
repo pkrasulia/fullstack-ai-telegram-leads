@@ -20,5 +20,45 @@
       "policy": "Все права защищены ©",
       "year": "2024"
     }
+  },
+
+  "logs": {
+    "title": "История действий и событий",
+    "exportLogs": "Экспорт логов",
+    "searchPlaceholder": "Поиск по логам...",
+    "eventLog": "Журнал событий",
+    "user": "Пользователь",
+    "dateRangeSelected": "Выбран диапазон дат:",
+    "severity": {
+      "low": "Низкая",
+      "medium": "Средняя",
+      "high": "Высокая"
+    },
+    "sampleLogs": {
+      "login": {
+        "action": "Вход в систему",
+        "details": "Успешный вход с IP 192.168.1.1"
+      },
+      "settingsChange": {
+        "action": "Изменение настроек",
+        "details": "Обновлены настройки безопасности"
+      },
+      "integrationAdded": {
+        "action": "Добавлена интеграция",
+        "details": "Интеграция с CRM системой"
+      },
+      "chatCreated": {
+        "action": "Создан чат",
+        "details": "Новый чат #12345 с клиентом"
+      },
+      "messageReceived": {
+        "action": "Получено сообщение",
+        "details": "Новое сообщение в чате #12345"
+      },
+      "dialogStarted": {
+        "action": "Начат диалог",
+        "details": "Начат диалог в чате #12345"
+      }
+    }
   }
 }
