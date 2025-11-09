@@ -159,8 +159,12 @@
       "nameRequired": "Имя лида обязательно для заполнения",
       "leadUpdated": "Лид обновлен",
       "leadUpdatedDescription": "Информация о {name} успешно сохранена",
+      "leadCreated": "Лид создан",
+      "leadCreatedDescription": "Лид {name} успешно создан",
       "saveError": "Ошибка сохранения",
-      "saveErrorDescription": "Не удалось сохранить изменения"
+      "saveErrorDescription": "Не удалось сохранить изменения",
+      "deleteError": "Ошибка удаления",
+      "deleteErrorDescription": "Не удалось удалить лида"
     },
     "list": {
       "searchPlaceholder": "Поиск по имени, email, компании...",
@@ -234,6 +238,32 @@
       "cancel": "Отмена",
       "save": "Сохранить",
       "saving": "Сохранение..."
+    },
+    "addDialog": {
+      "title": "Добавить нового лида",
+      "description": "Заполните информацию о лиде и нажмите \"Создать\"",
+      "name": "Имя",
+      "namePlaceholder": "Введите имя лида",
+      "email": "Email",
+      "phone": "Телефон",
+      "phonePlaceholder": "+7 999 123 45 67",
+      "telegramUsername": "Telegram Username",
+      "telegramUsernamePlaceholder": "@username",
+      "telegramId": "Telegram ID",
+      "telegramIdPlaceholder": "123456789",
+      "company": "Компания",
+      "companyPlaceholder": "Название компании",
+      "position": "Должность",
+      "positionPlaceholder": "Должность",
+      "status": "Статус",
+      "statusPlaceholder": "Выберите статус",
+      "source": "Источник",
+      "sourcePlaceholder": "Выберите источник",
+      "notes": "Заметки",
+      "notesPlaceholder": "Дополнительная информация о лиде...",
+      "cancel": "Отмена",
+      "create": "Создать",
+      "creating": "Создание..."
     }
   }
 }

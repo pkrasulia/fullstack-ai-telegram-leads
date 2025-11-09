@@ -22,6 +22,7 @@ import {
 import {
   useGetLeadsService,
   useGetLeadsByStatusService,
+  useDeleteLeadsService,
 } from '@/services/api/services/leads';
 import { Lead, LeadStatus } from '@/services/api/types/lead';
 import { Button } from '@/components/ui/button';
@@ -60,6 +61,7 @@ import { SheetClose, SheetFooter } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { LeadList } from '@/components/leads/lead-list';
 import { EditLeadDialog } from '@/components/leads/edit-lead-dialog';
+import { AddLeadDialog } from '@/components/leads/add-lead-dialog';
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
@@ -69,6 +71,7 @@ function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [stats, setStats] = useState({
     total: 0,
     new: 0,
@@ -85,6 +88,7 @@ function LeadsPage() {
   const getLeadsService = useGetLeadsService();
   const getNewLeadsService = useGetLeadsByStatusService();
   const getConvertedLeadsService = useGetLeadsByStatusService();
+  const deleteLeadService = useDeleteLeadsService();
 
   useEffect(() => {
     const fetchLeads = async () => {
@@ -233,16 +237,77 @@ function LeadsPage() {
     });
   };
 
-  const handleLeadDelete = () => {
-    if (selectedLead) {
-      toast(t('toasts.leadDeleted'), {
-        description: `${selectedLead.name} ${t('toasts.leadDeletedDescription')}`,
-        action: {
-          label: t('toasts.undo'),
-          onClick: () => console.log('Undo delete'),
-        },
-      });
+  const handleLeadCreated = (newLead: Lead) => {
+    // Add the new lead to the leads array
+    setLeads((prevLeads) => [newLead, ...prevLeads]);
+
+    // Select the newly created lead
+    setSelectedLead(newLead);
+
+    // Recalculate stats
+    const updatedLeads = [newLead, ...leads];
+    const totalCount = updatedLeads.length;
+    const newCount = updatedLeads.filter(
+      (lead) => lead.status === LeadStatus.NEW,
+    ).length;
+    const convertedCount = updatedLeads.filter(
+      (lead) => lead.status === LeadStatus.CONVERTED,
+    ).length;
+    const conversionRate =
+      totalCount > 0 ? (convertedCount / totalCount) * 100 : 0;
+
+    setStats({
+      total: totalCount,
+      new: newCount,
+      converted: convertedCount,
+      conversionRate: Math.round(conversionRate * 10) / 10,
+    });
+  };
+
+  const handleLeadDelete = async () => {
+    if (!selectedLead) return;
+
+    const leadId = selectedLead.id;
+    const leadName = selectedLead.name;
+
+    try {
+      await deleteLeadService({ id: leadId });
+
+      // Calculate updated leads array
+      const updatedLeads = leads.filter((lead) => lead.id !== leadId);
+
+      // Remove the lead from the leads array
+      setLeads(updatedLeads);
+
+      // Clear selected lead
       setSelectedLead(null);
+
+      // Recalculate stats
+      const totalCount = updatedLeads.length;
+      const newCount = updatedLeads.filter(
+        (lead) => lead.status === LeadStatus.NEW,
+      ).length;
+      const convertedCount = updatedLeads.filter(
+        (lead) => lead.status === LeadStatus.CONVERTED,
+      ).length;
+      const conversionRate =
+        totalCount > 0 ? (convertedCount / totalCount) * 100 : 0;
+
+      setStats({
+        total: totalCount,
+        new: newCount,
+        converted: convertedCount,
+        conversionRate: Math.round(conversionRate * 10) / 10,
+      });
+
+      toast.success(t('toasts.leadDeleted'), {
+        description: `${leadName} ${t('toasts.leadDeletedDescription')}`,
+      });
+    } catch (error) {
+      console.error('Error deleting lead:', error);
+      toast.error(t('toasts.deleteError'), {
+        description: t('toasts.deleteErrorDescription'),
+      });
     }
   };
 
@@ -256,7 +321,7 @@ function LeadsPage() {
             {t('description')}
           </p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setAddDialogOpen(true)}>
           <Plus className="h-4 w-4" />
           {t('addLead')}
         </Button>
@@ -523,6 +588,12 @@ function LeadsPage() {
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         onLeadUpdated={handleLeadUpdated}
+      />
+
+      <AddLeadDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        onLeadCreated={handleLeadCreated}
       />
     </main>
   );

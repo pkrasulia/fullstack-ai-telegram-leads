@@ -159,8 +159,12 @@
       "nameRequired": "Lead name is required",
       "leadUpdated": "Lead updated",
       "leadUpdatedDescription": "Information about {name} successfully saved",
+      "leadCreated": "Lead created",
+      "leadCreatedDescription": "Lead {name} has been successfully created",
       "saveError": "Save error",
-      "saveErrorDescription": "Failed to save changes"
+      "saveErrorDescription": "Failed to save changes",
+      "deleteError": "Delete error",
+      "deleteErrorDescription": "Failed to delete lead"
     },
     "list": {
       "searchPlaceholder": "Search by name, email, company...",
@@ -234,6 +238,32 @@
       "cancel": "Cancel",
       "save": "Save",
       "saving": "Saving..."
+    },
+    "addDialog": {
+      "title": "Add New Lead",
+      "description": "Fill in the lead information and click \"Create\"",
+      "name": "Name",
+      "namePlaceholder": "Enter lead name",
+      "email": "Email",
+      "phone": "Phone",
+      "phonePlaceholder": "+1 999 123 45 67",
+      "telegramUsername": "Telegram Username",
+      "telegramUsernamePlaceholder": "@username",
+      "telegramId": "Telegram ID",
+      "telegramIdPlaceholder": "123456789",
+      "company": "Company",
+      "companyPlaceholder": "Company name",
+      "position": "Position",
+      "positionPlaceholder": "Position",
+      "status": "Status",
+      "statusPlaceholder": "Select status",
+      "source": "Source",
+      "sourcePlaceholder": "Select source",
+      "notes": "Notes",
+      "notesPlaceholder": "Additional information about the lead...",
+      "cancel": "Cancel",
+      "create": "Create",
+      "creating": "Creating..."
     }
   }
 }
