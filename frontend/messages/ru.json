@@ -7,11 +7,56 @@
   "navbar": {
     "logo": "Account",
     "routes": {},
-    "buttons": {},
+    "buttons": {
+      "signIn": "Войти",
+      "signUp": "Зарегистрироваться"
+    },
     "theme": {
       "dark": "Тёмная",
       "light": "Светлая",
       "system": "Системная"
+    }
+  },
+
+  "sign-in": {
+    "title": "Войти",
+    "description": "Введите ваш email ниже для входа в ваш аккаунт",
+    "email": "Email",
+    "password": "Пароль",
+    "emailPlaceholder": "email@example.com",
+    "loginButton": "Войти",
+    "loginWithGoogle": "Войти с Google",
+    "dontHaveAccount": "Нет аккаунта?",
+    "signUp": "Зарегистрироваться",
+    "forgotPassword": "Забыли пароль?",
+    "pleaseWait": "Пожалуйста, подождите",
+    "invalidCredentials": "Неверный email или пароль",
+    "validation": {
+      "email": "Некорректный email",
+      "passwordMin": "Пароль должен быть не менее 6 символов"
+    }
+  },
+  "sign-up": {
+    "title": "Зарегистрироваться",
+    "description": "Введите ваш email ниже для создания нового аккаунта",
+    "firstName": "Имя",
+    "lastName": "Фамилия",
+    "email": "Email",
+    "password": "Пароль",
+    "firstNamePlaceholder": "Иван",
+    "lastNamePlaceholder": "Иванов",
+    "emailPlaceholder": "m@example.com",
+    "createAccount": "Создать аккаунт",
+    "signUpWithGoogle": "Зарегистрироваться с Google",
+    "alreadyHaveAccount": "Уже есть аккаунт? Войти",
+    "loading": "Загрузка...",
+    "errorCreatingAccount": "Ошибка при создании аккаунта",
+    "errorSigningIn": "Ошибка при входе",
+    "validation": {
+      "firstNameRequired": "Имя обязательно для заполнения",
+      "lastNameRequired": "Фамилия обязательна для заполнения",
+      "email": "Некорректный email",
+      "passwordMin": "Пароль должен быть не менее 6 символов"
     }
   },
 

@@ -7,11 +7,56 @@
   "navbar": {
     "logo": "Account",
     "routes": {},
-    "buttons": {},
+    "buttons": {
+      "signIn": "Sign In",
+      "signUp": "Sign Up"
+    },
     "theme": {
       "dark": "Dark",
       "light": "Light",
       "system": "System"
+    }
+  },
+
+  "sign-in": {
+    "title": "Sign In",
+    "description": "Enter your email below to login to your account",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "email@example.com",
+    "loginButton": "Login",
+    "loginWithGoogle": "Login with Google",
+    "dontHaveAccount": "Don't have an account?",
+    "signUp": "Sign up",
+    "forgotPassword": "Forgot your password?",
+    "pleaseWait": "Please wait",
+    "invalidCredentials": "Invalid email or password",
+    "validation": {
+      "email": "Invalid email address",
+      "passwordMin": "Password must be at least 6 characters"
+    }
+  },
+  "sign-up": {
+    "title": "Sign Up",
+    "description": "Enter your email below to create a new account",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "password": "Password",
+    "firstNamePlaceholder": "John",
+    "lastNamePlaceholder": "Doe",
+    "emailPlaceholder": "m@example.com",
+    "createAccount": "Create Account",
+    "signUpWithGoogle": "Sign Up with Google",
+    "alreadyHaveAccount": "Already have an account? Sign In",
+    "loading": "Loading...",
+    "errorCreatingAccount": "There was an error creating your account",
+    "errorSigningIn": "There was an error signing in",
+    "validation": {
+      "firstNameRequired": "First name is required",
+      "lastNameRequired": "Last name is required",
+      "email": "Invalid email address",
+      "passwordMin": "Password must be at least 6 characters"
     }
   },
 

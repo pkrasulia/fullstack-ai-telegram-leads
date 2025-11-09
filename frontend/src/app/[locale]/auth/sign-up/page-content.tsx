@@ -33,19 +33,20 @@ type SignUpFormData = {
   password: string;
 };
 
-const schema = z.object({
-  firstName: z.string().nonempty('First name is required'),
-  lastName: z.string().nonempty('Last name is required'),
-  email: z.string().email('Invalid email address'),
-  telegram: z.string().optional(),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-});
-
 function SignUpPage() {
   const t = useTranslations('sign-up');
   const currentLocale = useLocale();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  const schema = z.object({
+    firstName: z.string().nonempty(t('validation.firstNameRequired')),
+    lastName: z.string().nonempty(t('validation.lastNameRequired')),
+    email: z.string().email(t('validation.email')),
+    telegram: z.string().optional(),
+    password: z.string().min(6, t('validation.passwordMin')),
+  });
+  
   const {
     register,
     handleSubmit,
@@ -66,7 +67,7 @@ function SignUpPage() {
 
     if (statusSignUp === HTTP_CODES_ENUM.UNPROCESSABLE_ENTITY) {
       // Handle validation errors
-      setError('There was an error creating your account');
+      setError(t('errorCreatingAccount'));
       return;
     }
 
@@ -83,7 +84,7 @@ function SignUpPage() {
       });
       setUser(dataSignIn.user);
     } else {
-      setError('There was an error signing in');
+      setError(t('errorSigningIn'));
     }
 
     setIsLoading(false);
@@ -103,7 +104,7 @@ function SignUpPage() {
                 <Label htmlFor="first-name">{t('firstName')}</Label>
                 <Input
                   id="first-name"
-                  placeholder="John"
+                  placeholder={t('firstNamePlaceholder')}
                   required
                   {...register('firstName')}
                 />
@@ -115,7 +116,7 @@ function SignUpPage() {
                 <Label htmlFor="last-name">{t('lastName')}</Label>
                 <Input
                   id="last-name"
-                  placeholder="Doe"
+                  placeholder={t('lastNamePlaceholder')}
                   required
                   {...register('lastName')}
                 />
@@ -129,7 +130,7 @@ function SignUpPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder={t('emailPlaceholder')}
                 required
                 {...register('email')}
               />
@@ -146,7 +147,7 @@ function SignUpPage() {
             </div>
             {isLoading ? (
               <Button disabled className="w-full">
-                Loading...
+                {t('loading')}
               </Button>
             ) : (
               <Button type="submit" className="w-full">
@@ -159,7 +160,7 @@ function SignUpPage() {
             </Button>
           </div>
           <div className="mt-4 text-center text-sm">
-            <Link href="/en/auth/sign-in" className="underline">
+            <Link href={`/${currentLocale}/auth/sign-in`} className="underline">
               {t('alreadyHaveAccount')}{' '}
             </Link>
           </div>

@@ -14,7 +14,7 @@ import { useTranslations } from 'next-intl';
 import withPageRequiredGuest from '@/services/auth/with-page-required-guest';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { unknown, z } from 'zod';
+import { z } from 'zod';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useAuthLoginService } from '@/services/api/services/auth';
@@ -22,8 +22,6 @@ import useAuthActions from '@/services/auth/use-auth-actions';
 import useAuthTokens from '@/services/auth/use-auth-tokens';
 import HTTP_CODES_ENUM from '@/services/api/types/http-codes';
 import { useLocale } from 'next-intl';
-
-import { SetStateAction } from 'react';
 
 type PropsType = {
   params: { slug: string };
@@ -35,15 +33,11 @@ type SignInFormData = {
   password: string;
 };
 
-const schema = z.object({
-  email: z.string().email('Некорректный email'),
-  password: z.string().min(6, 'Пароль должен быть не менее 6 символов'),
-});
-
 export function ButtonLoading() {
+  const t = useTranslations('sign-in');
   return (
     <Button disabled>
-      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait
+      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('pleaseWait')}
     </Button>
   );
 }
@@ -52,6 +46,12 @@ function Form() {
   const t = useTranslations('sign-in');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  const schema = z.object({
+    email: z.string().email(t('validation.email')),
+    password: z.string().min(6, t('validation.passwordMin')),
+  });
+  
   const {
     register,
     handleSubmit,
@@ -71,7 +71,7 @@ function Form() {
 
     if (status === HTTP_CODES_ENUM.UNPROCESSABLE_ENTITY) {
       // Обработка ошибок валидации
-      setError('Неверный email или пароль');
+      setError(t('invalidCredentials'));
     }
 
     if (status === HTTP_CODES_ENUM.OK) {
@@ -92,17 +92,17 @@ function Form() {
         <CardHeader>
           <CardTitle className="text-2xl">{t('title')}</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            {t('description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('email')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="email@example.com"
+                placeholder={t('emailPlaceholder')}
                 required
                 {...register('email')}
               />
@@ -110,7 +110,7 @@ function Form() {
             </div>
             <div className="grid gap-2">
               <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('password')}</Label>
               </div>
               <Input
                 id="password"
@@ -126,24 +126,24 @@ function Form() {
               <ButtonLoading />
             ) : (
               <Button type="submit" className="w-full">
-                Login
+                {t('loginButton')}
               </Button>
             )}
             {error && <div className="text-red-500">{error}</div>}
             <Button variant="outline" className="w-full">
-              Login with Google
+              {t('loginWithGoogle')}
             </Button>
           </div>
           <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{' '}
-            <Link href="/en/auth/sign-up" className="underline">
-              Sign up
+            {t('dontHaveAccount')}{' '}
+            <Link href={`/${currentLocale}/auth/sign-up`} className="underline">
+              {t('signUp')}
             </Link>
             <Link
               href={`/${currentLocale}/auth/forgot-password`}
               className="ml-auto inline-block text-sm underline mt-2"
             >
-              Forgot your password?
+              {t('forgotPassword')}
             </Link>
           </div>
         </CardContent>
