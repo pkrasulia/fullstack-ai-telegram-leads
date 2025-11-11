@@ -55,7 +55,11 @@ export class AiGatewayService {
 
     try {
       // Отправляем сообщение в ADK с переданными параметрами
-      const response = await this.sendMessageToAdk(
+      const {
+        response,
+        sessionId: newSessionId,
+        wasNewSessionCreated,
+      } = await this.sendMessageToAdk(
         createAiGatewayDto.text,
         createAiGatewayDto.userId,
         createAiGatewayDto.userName,
@@ -66,6 +70,8 @@ export class AiGatewayService {
       return {
         success: true,
         response: response,
+        sessionId: newSessionId, // Возвращаем sessionId (может быть новый, если была создана новая сессия)
+        wasNewSessionCreated: wasNewSessionCreated, // Возвращаем флаг, что была создана новая сессия
         timestamp: new Date().toISOString(),
       };
     } catch (error: any) {
@@ -104,14 +110,20 @@ export class AiGatewayService {
    * Отправляет сообщение в ADK
    * @param message - текст сообщения
    * @param userId - ID пользователя (опционально)
+   * @param userName - имя пользователя (опционально)
    * @param sessionId - ID сессии (опционально)
+   * @returns объект с ответом, sessionId и флагом wasNewSessionCreated
    */
   private async sendMessageToAdk(
     message: string,
     userId?: string,
     userName?: string,
     sessionId?: string,
-  ): Promise<string> {
+  ): Promise<{
+    response: string;
+    sessionId: string;
+    wasNewSessionCreated: boolean;
+  }> {
     try {
       this.logger.debug('Sending message to ADK', {
         message: message.substring(0, 50) + (message.length > 50 ? '...' : ''),
@@ -134,12 +146,7 @@ export class AiGatewayService {
       // Если нет sessionId или это не UUID, создаем новую сессию
       let targetSessionId: string | undefined = sessionId;
       if (!targetSessionId || (sessionId && !this.isValidUUID(sessionId))) {
-        this.logger.log('Creating new session', {
-          reason: !targetSessionId
-            ? 'no sessionId provided'
-            : 'invalid sessionId format',
-          userId: targetUserId,
-        });
+        // Создаем новую ADK-сессию (нет или неверный формат sessionId)
         const newSessionId = await this.createAdkSession(targetUserId);
         if (!newSessionId) {
           throw new Error('Failed to create ADK session');
@@ -179,6 +186,7 @@ export class AiGatewayService {
       });
 
       let response;
+      let wasNewSessionCreated = false; // Флаг, что была создана новая сессия
       try {
         response = await this.adkClient.post('/run', payload);
         this.logger.debug('ADK request sent successfully');
@@ -190,6 +198,7 @@ export class AiGatewayService {
         ) {
           this.logger.warn('Session not found, creating new one', {
             userId: targetUserId,
+            oldSessionId: targetSessionId,
           });
           const newSessionRes = await this.adkClient.post(
             `/apps/${this.appName}/users/${targetUserId}/sessions`,
@@ -197,8 +206,10 @@ export class AiGatewayService {
           const newSessionId =
             newSessionRes.data.session_id || newSessionRes.data.id;
           targetSessionId = newSessionId;
+          wasNewSessionCreated = true; // Устанавливаем флаг
           this.logger.log('New session created', {
             sessionId: targetSessionId,
+            oldSessionId: sessionId,
           });
           payload.sessionId = newSessionId;
           response = await this.adkClient.post('/run', payload);
@@ -257,12 +268,24 @@ export class AiGatewayService {
         this.logger.warn('Unknown response format', { responseData });
       }
 
+      // Гарантируем, что targetSessionId определен
+      if (!targetSessionId) {
+        throw new Error('Session ID is not set after processing ADK request');
+      }
+
       this.logger.log('ADK response processed', {
         responsePreview:
           aiResponse.substring(0, 50) + (aiResponse.length > 50 ? '...' : ''),
+        sessionId: targetSessionId,
+        wasNewSessionCreated: wasNewSessionCreated,
+        originalSessionId: sessionId,
       });
 
-      return aiResponse;
+      return {
+        response: aiResponse,
+        sessionId: targetSessionId, // Возвращаем sessionId (может быть новый, если была создана новая сессия)
+        wasNewSessionCreated: wasNewSessionCreated, // Возвращаем флаг
+      };
     } catch (error: any) {
       this.logger.error('Error sending message to ADK', {
         message: error?.message,
@@ -290,18 +313,32 @@ export class AiGatewayService {
 
   /**
    * Создает новую сессию в ADK
-   * @param userId - ID пользователя
+   * @param userId - ID пользователя (будет отформатирован с префиксом tg_user_ если нужно)
    */
   async createAdkSession(userId: string): Promise<string | null> {
     try {
-      this.logger.log('Creating new ADK session', { userId });
+      // Форматируем userId так же, как в sendMessageToAdk
+      let targetUserId: string;
+      if (userId.startsWith('tg_user_')) {
+        targetUserId = userId; // Уже в правильном формате
+      } else {
+        targetUserId = `tg_user_${userId}`; // Добавляем префикс
+      }
+
+      this.logger.log('Creating new ADK session', {
+        originalUserId: userId,
+        formattedUserId: targetUserId,
+      });
 
       const response = await this.adkClient.post(
-        `/apps/${this.appName}/users/${userId}/sessions`,
+        `/apps/${this.appName}/users/${targetUserId}/sessions`,
       );
       const sessionId = response.data.session_id || response.data.id;
 
-      this.logger.log('ADK session created', { userId, sessionId });
+      this.logger.log('ADK session created', {
+        userId: targetUserId,
+        sessionId,
+      });
       return sessionId;
     } catch (error: any) {
       this.logger.error('Error creating ADK session', {
