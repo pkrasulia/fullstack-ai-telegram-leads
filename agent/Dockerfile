@@ -12,6 +12,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/app
@@ -24,6 +25,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir google-adk
 
 FROM base as development
+
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
 # Copy source code
 COPY . .
 
@@ -41,4 +45,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 EXPOSE 8000
 
-CMD ["adk", "api_server", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["./entrypoint.sh"]

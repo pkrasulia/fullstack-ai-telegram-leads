@@ -28,11 +28,13 @@ agent = root_agent
 ```
 """
 
+import os
 import logging
 from google.adk import Agent
+from google.adk.sessions import DatabaseSessionService  # ✅ Правильный импорт
 from .config import Config
 from .prompts import GLOBAL_INSTRUCTION, INSTRUCTION
-from .tools.tools import get_session_data, send_lead_to_backend
+from .tools.tools import send_lead_to_backend
 from .shared_libraries.callbacks import (
     rate_limit_callback,
     before_agent,
@@ -41,21 +43,17 @@ from .shared_libraries.callbacks import (
 )
 
 logger = logging.getLogger(__name__)
-
 configs = Config()
 
-# Единственный агент - простой и элегантный
+# 2. Агент
 root_agent = Agent(
     model=configs.agent_settings.model,
     global_instruction=GLOBAL_INSTRUCTION,
     instruction=INSTRUCTION,
     name=configs.agent_settings.name,
-    tools=[
-        send_lead_to_backend,
-    ],
+    tools=[send_lead_to_backend],
     before_tool_callback=before_tool,
     after_tool_callback=after_tool,
     before_agent_callback=before_agent,
     before_model_callback=rate_limit_callback,
 )
-

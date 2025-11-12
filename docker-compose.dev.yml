@@ -6,10 +6,9 @@ services:
     env_file: 
       - .env.shared
     ports:
-      - ${DATABASE_PORT:-5432}:5432
+      - 5432:5432
     volumes:
-      - ai-chat-db:/var/lib/postgresql/data
-      - ./backend/database/init:/docker-entrypoint-initdb.d
+      - ./storage/shared/postgresql:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: ${DATABASE_USERNAME}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
@@ -96,8 +95,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:4343/api/v1/home/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 60s
+      retries: 5
+      start_period: 120s
     logging:
       driver: json-file
       options:
@@ -181,6 +180,8 @@ services:
       - ./agent:/usr/src/app
       - /usr/src/app/__pycache__
     depends_on:
+      postgres:
+        condition: service_healthy
       backend:
         condition: service_healthy
     healthcheck:
